@@ -1,0 +1,1667 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forge Audio</title>
+<style>
+:root {
+  --bg: #14151b;
+  --panel: #1b1d25;
+  --panel2: #22252f;
+  --line: #2e3240;
+  --text: #d9dce6;
+  --dim: #8a90a3;
+  --accent: #6b8cff;
+  --warn: #ffc857;
+  --err: #ff6b6b;
+  --ok: #7bd88f;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+  font: 13px/1.4 system-ui, "Segoe UI", sans-serif; }
+body { display: grid; grid-template-rows: auto 1fr; overflow: hidden; }
+button, select, input, textarea { font: inherit; color: var(--text); }
+button { background: var(--panel2); border: 1px solid var(--line); border-radius: 6px;
+  padding: 4px 10px; cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button.on { background: var(--accent); color: #0d0f16; border-color: var(--accent); }
+select, input[type=text], input[type=number], textarea {
+  background: var(--bg); border: 1px solid var(--line); border-radius: 5px; padding: 3px 6px; }
+input[type=number] { width: 70px; }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+:disabled { opacity: .4; cursor: not-allowed; }
+label { color: var(--dim); }
+
+header { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px;
+  background: var(--panel); border-bottom: 1px solid var(--line); }
+header h1 { font-size: 15px; margin: 0 10px 0 0; letter-spacing: .5px; }
+header h1 span { color: var(--accent); }
+.sep { width: 1px; height: 22px; background: var(--line); margin: 0 4px; }
+#time { font-family: var(--mono); min-width: 120px; color: var(--dim); }
+.grow { flex: 1; }
+header .mini { display: flex; align-items: center; gap: 6px; color: var(--dim); }
+header .mini input[type=range] { width: 90px; }
+
+main { display: grid; grid-template-columns: 300px 1fr; min-height: 0; }
+aside { background: var(--panel); border-right: 1px solid var(--line); overflow-y: auto; padding: 10px 12px; }
+aside h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--dim);
+  margin: 14px 0 6px; }
+aside h2:first-child { margin-top: 0; }
+.form { display: grid; grid-template-columns: 82px 1fr; gap: 5px 8px; align-items: center; }
+.form input[type=text], .form select { width: 100%; }
+.row2 { display: flex; gap: 6px; align-items: center; }
+.hint { color: var(--dim); font-size: 12px; margin: 6px 0 0; }
+
+#channels { display: flex; flex-direction: column; gap: 4px; }
+.chan { display: flex; align-items: center; gap: 6px; padding: 5px 6px; border-radius: 6px;
+  border: 1px solid transparent; cursor: pointer; background: var(--panel2); }
+.chan.active { border-color: var(--accent); }
+.chan .sw { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.chan .nm { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chan .nm small { color: var(--dim); }
+.chan button { padding: 0 6px; font-size: 11px; line-height: 18px; }
+.chan button.m.on { background: var(--err); border-color: var(--err); }
+.chan button.s.on { background: var(--warn); border-color: var(--warn); }
+
+#editor { display: grid; grid-template-rows: 1fr auto; min-height: 0; min-width: 0; }
+#rollWrap { position: relative; min-height: 200px; }
+#scroller { position: absolute; inset: 0; overflow: auto; }
+#spacer { pointer-events: none; }
+#roll { position: absolute; left: 0; top: 0; pointer-events: none; }
+
+#bottom { border-top: 1px solid var(--line); background: var(--panel); padding: 8px 12px;
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 12px; max-height: 38vh; overflow: auto; }
+#bottom h3 { margin: 0 0 4px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--dim);
+  font-weight: 600; display: flex; gap: 8px; align-items: center; }
+#rowText { width: 100%; height: 92px; font-family: var(--mono); font-size: 12.5px; resize: vertical; }
+#rowMsg { font-size: 12px; min-height: 18px; }
+#cli { font-family: var(--mono); font-size: 11.5px; color: var(--dim); word-break: break-all;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 5px; padding: 4px 6px; }
+#grid { font-family: var(--mono); font-size: 11.5px; margin: 0; white-space: pre; overflow-x: auto;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 5px; padding: 6px; }
+#lint { font-size: 12px; margin-top: 6px; }
+#lint div { padding: 1px 0; }
+.ok { color: var(--ok); } .warn { color: var(--warn); } .err { color: var(--err); }
+
+#toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--panel2);
+  border: 1px solid var(--accent); border-radius: 8px; padding: 8px 14px; opacity: 0; transition: opacity .2s;
+  pointer-events: none; max-width: 80vw; z-index: 10; }
+#toast.show { opacity: 1; }
+#help { position: fixed; inset: 0; background: #0009; display: none; align-items: center; justify-content: center; z-index: 9; }
+#help.show { display: flex; }
+#help > div { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 20px;
+  max-width: 640px; max-height: 85vh; overflow: auto; }
+#help h2 { margin-top: 0; font-size: 16px; }
+#help kbd { font-family: var(--mono); background: var(--panel2); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; }
+#help td { padding: 2px 10px 2px 0; vertical-align: top; }
+#drop { position: fixed; inset: 0; border: 3px dashed var(--accent); background: #6b8cff22; display: none; z-index: 8;
+  align-items: center; justify-content: center; font-size: 20px; }
+#drop.show { display: flex; }
+</style>
+</head>
+<body>
+<header>
+  <h1>forge<span>·audio</span></h1>
+  <button id="bOpen" title="Открыть .tune.json или .mid">Открыть…</button>
+  <input id="file" type="file" accept=".json,.mid,.midi" hidden>
+  <button id="bSaveTune" title="Сохранить документ трека — его понимает npm run tune">⤓ .tune.json</button>
+  <button id="bSaveMidi">⤓ .mid</button>
+  <button id="bSaveWav">⤓ .wav</button>
+  <button id="bDemo" title="Вернуть демо-трек skyroad">Демо</button>
+  <div class="sep"></div>
+  <button id="bHome" title="В начало">⏮</button>
+  <button id="bPlay" title="Пробел">▶ Играть</button>
+  <button id="bLoop" class="on" title="Повторять по кругу">⟲ Цикл</button>
+  <button id="bFollow" class="on" title="Прокручивать за курсором">⇥ Следить</button>
+  <span id="time">0:00.0 / 0:00.0</span>
+  <div class="sep"></div>
+  <button id="bUndo" title="Ctrl+Z">↶</button>
+  <button id="bRedo" title="Ctrl+Y">↷</button>
+  <button id="bGhost" class="on" title="Показывать ноты других каналов">Тени</button>
+  <div class="grow"></div>
+  <label class="mini">масштаб <input id="zoom" type="range" min="0.4" max="3" step="0.05" value="1"></label>
+  <label class="mini">громкость <input id="master" type="range" min="0" max="1" step="0.01" value="0.8"></label>
+  <button id="bHelp">?</button>
+</header>
+<main>
+  <aside>
+    <h2>Трек</h2>
+    <div class="form" id="trackForm"></div>
+    <h2>Каналы</h2>
+    <div id="channels"></div>
+    <div class="row2" style="margin-top:6px">
+      <button id="bAddChan">+ канал</button>
+      <button id="bDupChan">дублировать</button>
+    </div>
+    <h2 id="chanTitle">Канал</h2>
+    <div class="form" id="chanForm"></div>
+    <p class="hint">Строки пишутся ступенями лада, поэтому тоника, лад и октава канала сдвигают все его ноты сразу.</p>
+  </aside>
+  <section id="editor">
+    <div id="rollWrap">
+      <div id="scroller"><div id="spacer"></div></div>
+      <canvas id="roll"></canvas>
+    </div>
+    <div id="bottom">
+      <div>
+        <h3>Строка канала <span id="rowName"></span></h3>
+        <textarea id="rowText" spellcheck="false" wrap="off"></textarea>
+        <div id="rowMsg"></div>
+        <h3>Команда для npm run tune <button id="bCopy" style="font-size:11px;padding:0 6px">копировать</button></h3>
+        <div id="cli"></div>
+      </div>
+      <div>
+        <h3>Сетка трека</h3>
+        <pre id="grid"></pre>
+        <div id="lint"></div>
+      </div>
+    </div>
+  </section>
+</main>
+<div id="toast"></div>
+<div id="drop">Отпусти .tune.json или .mid</div>
+<div id="help"><div>
+  <h2>Как пользоваться</h2>
+  <table>
+    <tr><td><b>ЛКМ по пустому месту</b></td><td>поставить ноту; тяни вправо — длина</td></tr>
+    <tr><td><b>ЛКМ по ноте</b></td><td>выбрать и перетащить (время и высота)</td></tr>
+    <tr><td><b>Правый край ноты</b></td><td>тянуть — изменить длину</td></tr>
+    <tr><td><b>ПКМ</b></td><td>удалить ноту; веди с зажатой — стирать подряд</td></tr>
+    <tr><td><b>Shift + клик</b></td><td>акцент (на четверть громче)</td></tr>
+    <tr><td><b>Клик по клавише слева</b></td><td>послушать ноту</td></tr>
+    <tr><td><b>Клик по линейке</b></td><td>перемотать</td></tr>
+    <tr><td><kbd>Пробел</kbd></td><td>играть / пауза</td></tr>
+    <tr><td><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd></td><td>двигать выбранную ноту</td></tr>
+    <tr><td><kbd>Del</kbd></td><td>удалить выбранную ноту</td></tr>
+    <tr><td><kbd>Ctrl+Z</kbd> / <kbd>Ctrl+Y</kbd></td><td>отменить / повторить</td></tr>
+  </table>
+  <p>Каждый канал одноголосый, как в трекере: новая нота обрезает ту, что звучит.
+  Тёмные полосы — высоты, которые формат записать не может: ноты пишутся ступенями
+  лада (<code>_</code> база, <code>^</code>/<code>v</code> октава вверх и вниз,
+  <code>#</code>/<code>b</code> полутон только в базовой октаве). Акцент <code>&gt;</code>
+  тоже бывает только в базовой октаве.</p>
+  <p>Строку канала можно править и текстом внизу: <code>_5--</code> нота с удержанием,
+  <code>..</code> пауза, <code>|</code> граница такта, барабаны <code>k s h o c p t r</code>.</p>
+  <p>«⤓ .tune.json» сохраняет документ, который понимает <code>npm run tune</code>: его
+  можно отдать агенту на <code>tune lint</code>, <code>render</code> и доработку. «Открыть» понимает и
+  .mid: ноты встают на сетку 1/16 (или 1/8), лад подбирается сам, аккорды
+  сводятся к одному голосу на канал.</p>
+  <p>Звук синтезируется тем же способом, что в <code>tune render</code> (пульсы, треугольник,
+  шум NES). Трек с профилем studio здесь звучит чиптюн-приближением.</p>
+  <p style="text-align:right"><button id="bHelpClose">Понятно</button></p>
+</div></div>
+
+<script id="demo" type="application/json">{"format":"forge/tune@1","name":"skyroad","brief":"demo track for the forge-audio editor page","tempo":112,"meter":[4,4],"key":"a","scale":"natural-minor","profile":"nes","bars":8,"sections":[{"name":"A","from":0,"bars":8}],"channels":[{"name":"lead","voice":"pulse25","role":"melody","step":"1/8","octave":4,"volume":0.3,"pan":0,"envelope":{"attack":0,"decay":60,"sustain":0.7,"release":90},"steps":"_5--_6_5_3--_1--|_6----_5_6--^1--|^1--_7--_5--_3--|_2------_4--_2..|_5--_6_5_3--^1--|^3--^2^1_6--^1--|_6--_4--_6^1_6--|_2--#7--_5------"},{"name":"arp","voice":"pulse12","role":"harmony","step":"1/8","octave":3,"volume":0.14,"pan":0,"envelope":{"attack":0,"decay":60,"sustain":0.7,"release":90},"steps":"_1_3_5_3_1_3_5_3|_6^1^3^1_6^1^3^1|_3_5_7_5_3_5_7_5|_7^2^4^2_7^2^4^2|_1_3_5_3_1_3_5_3|_6^1^3^1_6^1^3^1|_4_6^1_6_4_6^1_6|_5_7^2_7_5_7^2_5"},{"name":"bass","voice":"triangle","role":"bass","step":"1/8","octave":2,"volume":0.36,"pan":0,"envelope":{"attack":0,"decay":60,"sustain":0.7,"release":90},"steps":"_1--_1--^1_1_1--|v6--v6--_6v6v6--|_3--_3--^3_3_3--|v7--v7--_7v7v7--|_1--_1--^1_1_1--|v6--v6--_6v6v6--|_4--_4--^4_4_4--|_5--_5--^5_5_5--|"},{"name":"drums","voice":"noise","role":"drums","step":"1/8","octave":4,"volume":0.22,"pan":0,"envelope":{"attack":0,"decay":60,"sustain":0.7,"release":90},"steps":"_c_h_s_h_k_k_s_h|_k_h_s_h_k_k_s_h|_k_h_s_h_k_k_s_h|_k_h_s_h_k_k_s_h|_c_h_s_h_k_k_s_h|_k_h_s_h_k_k_s_h|_k_h_s_h_k_k_s_h|_k_h_s_h_k_s>s>s"}]}</script>
+<script>
+'use strict';
+
+/* ───────────────────────── Theory (port of src/sound/theory.ts) ───────────────────────── */
+
+const SCALES = {
+  major: [0, 2, 4, 5, 7, 9, 11],
+  'natural-minor': [0, 2, 3, 5, 7, 8, 10],
+  'harmonic-minor': [0, 2, 3, 5, 7, 8, 11],
+  dorian: [0, 2, 3, 5, 7, 9, 10],
+  phrygian: [0, 1, 3, 5, 7, 8, 10],
+  mixolydian: [0, 2, 4, 5, 7, 9, 10],
+  'pentatonic-minor': [0, 3, 5, 7, 10],
+  blues: [0, 3, 5, 6, 7, 10],
+};
+const SCALE_LABELS = {
+  major: 'мажор', 'natural-minor': 'минор', 'harmonic-minor': 'гармонический минор', dorian: 'дорийский',
+  phrygian: 'фригийский', mixolydian: 'миксолидийский', 'pentatonic-minor': 'пентатоника (минор)', blues: 'блюз',
+};
+const NOTE_NAMES = ['c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#', 'a', 'a#', 'b'];
+const LETTERS = { c: 0, d: 2, e: 4, f: 5, g: 7, a: 9, b: 11 };
+
+function parseRoot(input) {
+  const m = /^([a-g])([#b]?)$/i.exec(String(input).trim().toLowerCase());
+  if (!m) throw new Error(`Не понимаю тонику: ${input}`);
+  const shift = m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0;
+  return (((LETTERS[m[1]] + shift) % 12) + 12) % 12;
+}
+
+function degreeToMidi(root, scale, degree, octave, accidental = 0) {
+  const steps = SCALES[scale];
+  if (!steps) throw new Error(`Неизвестный лад: ${scale}`);
+  const index = Math.round(degree) - 1;
+  const octaveShift = Math.floor(index / steps.length);
+  const inScale = ((index % steps.length) + steps.length) % steps.length;
+  return 12 * (octave + octaveShift + 1) + root + steps[inScale] + accidental;
+}
+
+const midiToFreq = (m) => 440 * 2 ** ((m - 69) / 12);
+const midiName = (m) => `${NOTE_NAMES[((m % 12) + 12) % 12]}${Math.floor(m / 12) - 1}`;
+
+/* ───────────────────────── The document (port of src/sound/tune.ts) ───────────────────────── */
+
+const TUNE_FORMAT = 'forge/tune@1';
+const VOICES = ['pulse12', 'pulse25', 'pulse50', 'pulse75', 'triangle', 'noise', 'saw', 'sine'];
+const ROLES = ['melody', 'harmony', 'bass', 'drums'];
+const ROLE_LABELS = { melody: 'мелодия', harmony: 'гармония', bass: 'бас', drums: 'барабаны' };
+const STEPS = ['1/4', '1/8', '1/16', '1/32'];
+const DRUM_SYMBOLS = { k: 'kick', s: 'snare', h: 'hat', o: 'openhat', c: 'crash', p: 'clap', t: 'tom', r: 'ride' };
+const DRUM_ORDER = ['c', 'r', 'o', 'h', 'p', 's', 't', 'k'];
+const DRUM_LABELS = { kick: 'бочка', snare: 'малый', hat: 'хэт', openhat: 'откр. хэт', crash: 'крэш', clap: 'хлопок', tom: 'том', ride: 'райд' };
+const DEFAULT_ENVELOPE = { attack: 0, decay: 60, sustain: 0.7, release: 90 };
+
+function createChannel(name, options = {}) {
+  return { name, voice: 'pulse25', role: 'melody', step: '1/8', octave: 4, volume: 0.8, pan: 0,
+    envelope: { ...DEFAULT_ENVELOPE }, steps: '', ...options };
+}
+
+function parseTune(input) {
+  const data = typeof input === 'string' ? JSON.parse(input) : input;
+  if (!data || typeof data !== 'object') throw new Error('Пустой документ трека');
+  if (data.format !== undefined && data.format !== TUNE_FORMAT) throw new Error(`Неизвестный формат: ${data.format}`);
+  const bars = Number(data.bars ?? 8);
+  const meter = Array.isArray(data.meter) ? data.meter : [4, 4];
+  const channels = (Array.isArray(data.channels) ? data.channels : []).map((ch) => {
+    if (!ch.name) throw new Error('Канал без имени');
+    const out = createChannel(String(ch.name), {
+      voice: ch.voice ?? 'pulse25', role: ch.role ?? 'melody', step: String(ch.step ?? '1/8'),
+      octave: Number(ch.octave ?? 4), volume: Number(ch.volume ?? 0.8), pan: Number(ch.pan ?? 0),
+      envelope: { ...DEFAULT_ENVELOPE, ...(ch.envelope ?? {}) }, steps: String(ch.steps ?? ''),
+    });
+    // Studio fields are carried through untouched, so a studio track survives a round trip.
+    for (const key of ['instrument', 'fx', 'humanize', 'sample']) if (ch[key] !== undefined) out[key] = ch[key];
+    return out;
+  });
+  const sections = (Array.isArray(data.sections) ? data.sections : []).map((s) => ({
+    name: String(s.name ?? 'A'), from: Number(s.from ?? 0), bars: Number(s.bars ?? bars) }));
+  const tune = {
+    format: TUNE_FORMAT, name: String(data.name ?? ''), brief: String(data.brief ?? ''),
+    tempo: Number(data.tempo ?? 120), meter: [Number(meter[0] ?? 4), Number(meter[1] ?? 4)],
+    key: String(data.key ?? 'c'), scale: data.scale ?? 'major', profile: data.profile ?? 'nes', bars,
+    sections: sections.length ? sections : [{ name: 'A', from: 0, bars }], channels,
+  };
+  if (data.master !== undefined) tune.master = data.master;
+  parseRoot(tune.key);
+  if (!SCALES[tune.scale]) throw new Error(`Неизвестный лад: ${tune.scale}`);
+  for (const ch of channels) validateCells(parseCells(ch.steps), ch);
+  return tune;
+}
+
+function stepDen(step) {
+  const m = /^(\d+)\s*\/\s*(\d+)$/.exec(String(step).trim());
+  if (!m || m[1] !== '1') throw new Error(`Шаг должен быть вида 1/N: ${step}`);
+  return Number(m[2]);
+}
+const stepsPerBar = (tune, ch) => Math.round((tune.meter[0] * stepDen(ch.step)) / tune.meter[1]);
+const totalSteps = (tune, ch) => tune.bars * stepsPerBar(tune, ch);
+const stepSeconds = (tune, ch) => (60 / tune.tempo) * (4 / stepDen(ch.step));
+const tuneSeconds = (tune) => (tune.bars * tune.meter[0] * 60) / tune.tempo * (4 / tune.meter[1]);
+
+function parseCells(steps) {
+  const body = String(steps).replace(/[|\s]/g, '');
+  if (body.length % 2 !== 0) throw new Error(`строка должна состоять из двухсимвольных ячеек, а в ней ${body.length} символов`);
+  const cells = [];
+  for (let i = 0; i < body.length; i += 2) cells.push({ mod: body[i], value: body[i + 1] });
+  return cells;
+}
+
+function validateCells(cells, ch) {
+  cells.forEach((c, i) => {
+    if (c.value === '-' || c.value === '.') return;
+    const where = `ячейка ${i + 1} («${c.mod}${c.value}»)`;
+    if (ch.role === 'drums') {
+      if (!DRUM_SYMBOLS[c.value]) throw new Error(`${where}: неизвестный барабан — бывают k s h o c p t r`);
+    } else {
+      if (!/^[1-9]$/.test(c.value)) throw new Error(`${where}: ожидалась ступень 1…9, «--» или «..»`);
+      if (!'_^v#b>'.includes(c.mod)) throw new Error(`${where}: неизвестный модификатор — бывают _ ^ v # b >`);
+    }
+  });
+}
+
+/** A row as editable notes: `{start, len, mod, value}`, holds folded into `len`. */
+function rowNotes(ch) {
+  const notes = [];
+  let current = null;
+  parseCells(ch.steps).forEach((c, i) => {
+    if (c.value === '-') { if (current) current.len++; return; }
+    if (c.value === '.') { current = null; return; }
+    current = { start: i, len: 1, mod: c.mod, value: c.value };
+    notes.push(current);
+  });
+  return notes;
+}
+
+/** Notes back into a row of exactly `total` cells. A later head overwrites an earlier hold. */
+function notesToRow(notes, total) {
+  const cells = Array.from({ length: total }, () => '..');
+  for (const n of [...notes].sort((a, b) => a.start - b.start)) {
+    if (n.start < 0 || n.start >= total) continue;
+    cells[n.start] = n.mod + n.value;
+    for (let i = 1; i < n.len && n.start + i < total; i++) cells[n.start + i] = '--';
+  }
+  return cells.join('');
+}
+
+function keyOf(tune) { return { root: parseRoot(tune.key), scale: tune.scale }; }
+
+function cellMidi(tune, ch, mod, value) {
+  const { root, scale } = keyOf(tune);
+  const shift = mod === '^' ? 1 : mod === 'v' ? -1 : 0;
+  const accidental = mod === '#' ? 1 : mod === 'b' ? -1 : 0;
+  return degreeToMidi(root, scale, Number(value), ch.octave + shift, accidental);
+}
+
+/** Every cell the format can write for this channel, the plainest spelling first. */
+function candidates(tune, ch) {
+  const len = SCALES[tune.scale].length;
+  const out = [];
+  ['_', '^', 'v', '#', 'b'].forEach((mod, mi) => {
+    for (let v = 1; v <= 9; v++) {
+      out.push({ mod, value: String(v), midi: cellMidi(tune, ch, mod, v), rank: (v > len ? 10 : 0) + mi });
+    }
+  });
+  return out.sort((a, b) => a.rank - b.rank);
+}
+
+function encodePitch(tune, ch, midi, accent) {
+  const list = candidates(tune, ch);
+  if (accent) {
+    const plain = list.find((c) => c.mod === '_' && c.midi === midi);
+    if (plain) return { mod: '>', value: plain.value };
+  }
+  const found = list.find((c) => c.midi === midi);
+  return found ? { mod: found.mod, value: found.value } : null;
+}
+
+/** Notes a renderer plays: pitched carry `midi`, drums carry `drum`. */
+function channelNotes(tune, ch) {
+  return rowNotes(ch).map((n) => ({
+    stepIndex: n.start, steps: n.len, accent: n.mod === '>',
+    drum: ch.role === 'drums' ? DRUM_SYMBOLS[n.value] : null,
+    midi: ch.role === 'drums' ? null : cellMidi(tune, ch, n.mod, n.value),
+  }));
+}
+
+function formatRow(tune, ch, cells, barsPerLine = 0) {
+  const per = stepsPerBar(tune, ch);
+  const bars = [];
+  for (let at = 0; at < cells.length; at += per) bars.push(cells.slice(at, at + per).join(''));
+  if (!barsPerLine) return bars.join('|');
+  const lines = [];
+  for (let i = 0; i < bars.length; i += barsPerLine) lines.push(bars.slice(i, i + barsPerLine).join('|'));
+  return lines.join('|\n');
+}
+
+function cellStrings(steps) { return parseCells(steps).map((c) => c.mod + c.value); }
+
+function formatGrid(tune) {
+  if (!tune.channels.length) return 'в треке нет каналов';
+  const width = Math.max(...tune.channels.map((c) => c.name.length));
+  const lines = tune.channels.map((ch) => `${ch.name.padEnd(width)}  ${formatRow(tune, ch, cellStrings(ch.steps))}`);
+  return [`${tune.name} · ${tune.key} ${tune.scale} · ${tune.tempo} bpm · ${tune.bars} bars · ${tune.profile}`, ...lines].join('\n');
+}
+
+/* ───────────────────────── Synth and mixer (port of synth.ts / mixer.ts) ───────────────────────── */
+
+const SR = 44100;
+const DUTY = { pulse12: 0.125, pulse25: 0.25, pulse50: 0.5, pulse75: 0.75 };
+const DRUM_LENGTHS = { kick: 0.25, snare: 0.15, hat: 0.04, openhat: 0.2, crash: 0.6, clap: 0.15, tom: 0.25, ride: 0.5 };
+const ACCENT_GAIN = 1.25;
+
+class Lfsr {
+  constructor(short = false) { this.short = short; this.register = 1; }
+  next() {
+    const tap = this.short ? (this.register >> 6) & 1 : (this.register >> 1) & 1;
+    const feedback = (this.register & 1) ^ tap;
+    this.register = (this.register >> 1) | (feedback << 14);
+    return this.register & 1 ? 1 : -1;
+  }
+}
+
+function envelopeAt(env, sample, total, rate) {
+  const attack = Math.max(0, (env.attack / 1000) * rate);
+  const decay = Math.max(0, (env.decay / 1000) * rate);
+  const release = Math.max(0, (env.release / 1000) * rate);
+  const sustain = Math.max(0, Math.min(1, env.sustain));
+  if (sample < attack) return attack === 0 ? 1 : sample / attack;
+  if (sample < attack + decay) {
+    const t = decay === 0 ? 1 : (sample - attack) / decay;
+    return 1 + (sustain - 1) * t;
+  }
+  const releaseStart = Math.max(attack + decay, total - release);
+  if (sample >= releaseStart && release > 0) return sustain * (1 - Math.min(1, (sample - releaseStart) / release));
+  return sustain;
+}
+
+function waveAt(voice, phase) {
+  switch (voice) {
+    case 'pulse12': case 'pulse25': case 'pulse50': case 'pulse75': return phase < DUTY[voice] ? 1 : -1;
+    case 'triangle': return Math.round((4 * Math.abs(phase - 0.5) - 1) * 7.5) / 7.5;
+    case 'saw': return 2 * phase - 1;
+    case 'sine': return Math.sin(2 * Math.PI * phase);
+    default: return 0;
+  }
+}
+
+function renderVoice(target, offset, { voice, freq, samples, envelope, velocity }) {
+  const noise = voice === 'noise' ? new Lfsr(false) : null;
+  let phase = 0, noisePhase = 0;
+  for (let i = 0; i < samples; i++) {
+    const at = offset + i;
+    if (at < 0 || at >= target.length) continue;
+    let value;
+    if (noise) {
+      noisePhase += (freq * 16) / SR;
+      let stepped = 0;
+      while (noisePhase >= 1) { noisePhase -= 1; stepped = noise.next(); }
+      value = stepped || noise.next();
+    } else {
+      phase += freq / SR;
+      phase -= Math.floor(phase);
+      value = waveAt(voice, phase);
+    }
+    target[at] += value * envelopeAt(envelope, i, samples, SR) * velocity;
+  }
+}
+
+function renderDrum(target, offset, drum, velocity) {
+  drum = drum === 'clap' ? 'snare' : drum === 'tom' ? 'kick' : drum === 'ride' ? 'openhat' : drum;
+  const samples = Math.max(1, Math.round(DRUM_LENGTHS[drum] * SR));
+  const noise = new Lfsr(drum === 'hat' || drum === 'openhat');
+  let phase = 0;
+  for (let i = 0; i < samples; i++) {
+    const at = offset + i;
+    if (at < 0 || at >= target.length) continue;
+    const t = i / samples;
+    let value;
+    if (drum === 'kick') {
+      phase += (150 * (1 - t) + 50 * t) / SR;
+      value = Math.sin(2 * Math.PI * phase) * Math.exp(-6 * t);
+    } else if (drum === 'snare') {
+      phase += 190 / SR;
+      value = (noise.next() * 0.7 + Math.sin(2 * Math.PI * phase) * 0.3) * Math.exp(-12 * t);
+    } else {
+      value = noise.next() * Math.exp(-(drum === 'hat' ? 40 : drum === 'openhat' ? 10 : 4) * t);
+    }
+    target[at] += value * velocity;
+  }
+}
+
+function renderNote(target, offset, tune, ch, note, stepSec) {
+  const velocity = Math.min(1, ch.volume * (note.accent ? ACCENT_GAIN : 1));
+  if (note.drum) { renderDrum(target, offset, note.drum, velocity); return; }
+  if (note.midi === null) return;
+  renderVoice(target, offset, {
+    voice: VOICES.includes(ch.voice) ? ch.voice : 'pulse25', freq: midiToFreq(note.midi),
+    samples: Math.max(1, Math.round(note.steps * stepSec * SR)), envelope: ch.envelope, velocity,
+  });
+}
+
+/** Renders the loop into stereo samples; `audible(i)` decides which channels sound. */
+function renderMix(tune, audible = () => true) {
+  const total = Math.max(1, Math.round(tuneSeconds(tune) * SR));
+  const left = new Float32Array(total), right = new Float32Array(total), scratch = new Float32Array(total);
+  tune.channels.forEach((ch, index) => {
+    if (!audible(index)) return;
+    scratch.fill(0);
+    const sec = stepSeconds(tune, ch);
+    for (const note of channelNotes(tune, ch)) renderNote(scratch, Math.round(note.stepIndex * sec * SR), tune, ch, note, sec);
+    const pan = tune.profile === 'nes' ? 0 : Math.max(-1, Math.min(1, ch.pan));
+    const gl = Math.min(1, 1 - pan), gr = Math.min(1, 1 + pan);
+    for (let i = 0; i < total; i++) { left[i] += scratch[i] * gl; right[i] += scratch[i] * gr; }
+  });
+  let peak = 0;
+  for (let i = 0; i < total; i++) peak = Math.max(peak, Math.abs(left[i]), Math.abs(right[i]));
+  if (peak > 1) for (let i = 0; i < total; i++) { left[i] = Math.tanh(left[i]); right[i] = Math.tanh(right[i]); }
+  return { left, right, peak, seconds: total / SR };
+}
+
+function encodeWav(left, right) {
+  const n = left.length, buf = new ArrayBuffer(44 + n * 4), v = new DataView(buf);
+  const str = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+  str(0, 'RIFF'); v.setUint32(4, 36 + n * 4, true); str(8, 'WAVE'); str(12, 'fmt ');
+  v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 2, true); v.setUint32(24, SR, true);
+  v.setUint32(28, SR * 4, true); v.setUint16(32, 4, true); v.setUint16(34, 16, true); str(36, 'data'); v.setUint32(40, n * 4, true);
+  for (let i = 0, o = 44; i < n; i++, o += 4) {
+    v.setInt16(o, Math.max(-1, Math.min(1, left[i])) * 32767, true);
+    v.setInt16(o + 2, Math.max(-1, Math.min(1, right[i])) * 32767, true);
+  }
+  return new Uint8Array(buf);
+}
+
+/* ───────────────────────── MIDI out (port of midi.ts) and in ───────────────────────── */
+
+const GM_PROGRAMS = { pulse12: 80, pulse25: 80, pulse50: 80, pulse75: 80, triangle: 38, noise: 118, saw: 81, sine: 80 };
+const GM_DRUMS = { kick: 36, snare: 38, hat: 42, openhat: 46, crash: 49, clap: 39, tom: 45, ride: 51 };
+const PPQ = 480;
+
+function varLen(value) {
+  const bytes = [value & 0x7f];
+  let rest = Math.floor(value / 128);
+  while (rest > 0) { bytes.unshift((rest & 0x7f) | 0x80); rest = Math.floor(rest / 128); }
+  return bytes;
+}
+function chunk(type, body) {
+  const out = [...type].map((c) => c.charCodeAt(0));
+  out.push((body.length >>> 24) & 0xff, (body.length >> 16) & 0xff, (body.length >> 8) & 0xff, body.length & 0xff);
+  return out.concat(body);
+}
+function buildTrack(events, name) {
+  const title = [...name.slice(0, 40)].map((c) => c.charCodeAt(0) & 0x7f);
+  const body = [0, 0xff, 0x03, title.length, ...title];
+  let previous = 0;
+  for (const e of [...events].sort((a, b) => a.tick - b.tick || a.order - b.order)) {
+    body.push(...varLen(e.tick - previous), ...e.bytes);
+    previous = e.tick;
+  }
+  body.push(0, 0xff, 0x2f, 0);
+  return body;
+}
+
+function encodeMidi(tune) {
+  const us = Math.round(60000000 / tune.tempo);
+  const tracks = [buildTrack([
+    { tick: 0, order: 0, bytes: [0xff, 0x51, 3, (us >> 16) & 0xff, (us >> 8) & 0xff, us & 0xff] },
+    { tick: 0, order: 0, bytes: [0xff, 0x58, 4, tune.meter[0], Math.round(Math.log2(tune.meter[1])), 24, 8] },
+  ], tune.name)];
+  tune.channels.forEach((ch, index) => {
+    const drums = ch.role === 'drums';
+    const mc = drums ? 9 : Math.min(15, index < 9 ? index : index + 1);
+    const tps = (PPQ * 4) / stepDen(ch.step);
+    const events = [{ tick: 0, order: 0, bytes: [0xc0 | mc, drums ? 0 : GM_PROGRAMS[ch.voice] ?? 80] }];
+    for (const n of channelNotes(tune, ch)) {
+      const pitch = n.drum ? GM_DRUMS[n.drum] : n.midi;
+      if (pitch == null || pitch < 0 || pitch > 127) continue;
+      const vel = Math.max(1, Math.min(127, Math.round(ch.volume * (n.accent ? 127 : 100))));
+      const start = Math.round(n.stepIndex * tps);
+      const end = Math.round((n.stepIndex + (n.drum ? 1 : n.steps)) * tps);
+      events.push({ tick: start, order: 1, bytes: [0x90 | mc, pitch, vel] });
+      events.push({ tick: Math.max(start + 1, end), order: 0, bytes: [0x80 | mc, pitch, 0] });
+    }
+    tracks.push(buildTrack(events, ch.name));
+  });
+  const header = chunk('MThd', [0, 1, (tracks.length >> 8) & 0xff, tracks.length & 0xff, (PPQ >> 8) & 0xff, PPQ & 0xff]);
+  return Uint8Array.from(tracks.reduce((all, t) => all.concat(chunk('MTrk', t)), header));
+}
+
+function decodeMidi(bytes) {
+  let p = 0;
+  const u32 = () => (bytes[p++] << 24 | bytes[p++] << 16 | bytes[p++] << 8 | bytes[p++]) >>> 0;
+  const u16 = () => (bytes[p++] << 8) | bytes[p++];
+  const tag = () => String.fromCharCode(bytes[p++], bytes[p++], bytes[p++], bytes[p++]);
+  const vlq = () => { let v = 0, b; do { b = bytes[p++]; v = (v << 7) | (b & 0x7f); } while (b & 0x80); return v; };
+  if (tag() !== 'MThd') throw new Error('Это не MIDI-файл');
+  const hlen = u32(), hstart = p;
+  u16(); const ntracks = u16(), division = u16();
+  p = hstart + hlen;
+  if (division & 0x8000) throw new Error('MIDI с SMPTE-временем не поддерживается');
+  const out = { ppq: division, tempo: 120, meter: [4, 4], notes: [], names: {} };
+  let tempoSet = false;
+  for (let t = 0; t < ntracks && p < bytes.length; t++) {
+    const id = tag(), len = u32(), end = p + len;
+    if (id !== 'MTrk') { p = end; continue; }
+    let tick = 0, running = 0;
+    const open = new Map();
+    while (p < end) {
+      tick += vlq();
+      let status = bytes[p];
+      if (status & 0x80) p++;
+      else { status = running; if (!status) break; }
+      const type = status & 0xf0, ch = status & 0x0f;
+      if (status === 0xff) {
+        const meta = bytes[p++], mlen = vlq(), data = bytes.subarray(p, p + mlen); p += mlen;
+        if (meta === 0x51 && !tempoSet) { out.tempo = Math.round(60000000 / (data[0] << 16 | data[1] << 8 | data[2])); tempoSet = true; }
+        if (meta === 0x58) out.meter = [data[0], 2 ** data[1]];
+        if (meta === 0x03) out.names[t] = String.fromCharCode(...data).trim();
+      } else if (status === 0xf0 || status === 0xf7) {
+        p += vlq();
+      } else if (running = status, type === 0x90 || type === 0x80) {
+        const pitch = bytes[p++], vel = bytes[p++], key = `${ch}:${pitch}`;
+        if (type === 0x90 && vel > 0) {
+          if (open.has(key)) { const n = open.get(key); n.end = tick; out.notes.push(n); }
+          open.set(key, { track: t, ch, pitch, start: tick, end: tick, vel });
+        } else if (open.has(key)) {
+          const n = open.get(key); n.end = tick; out.notes.push(n); open.delete(key);
+        }
+      } else if (type === 0xc0 || type === 0xd0) p += 1;
+      else p += 2;
+    }
+    for (const n of open.values()) { n.end = tick; out.notes.push(n); }
+    p = end;
+  }
+  return out;
+}
+
+function gmDrum(pitch) {
+  if (pitch <= 36) return 'k';
+  if (pitch === 37 || pitch === 38 || pitch === 40) return 's';
+  if (pitch === 39) return 'p';
+  if ([42, 44].includes(pitch)) return 'h';
+  if (pitch === 46) return 'o';
+  if ([49, 52, 55, 57].includes(pitch)) return 'c';
+  if ([51, 53, 59].includes(pitch)) return 'r';
+  if (pitch >= 41 && pitch <= 50) return 't';
+  return 'h';
+}
+
+function midiToTune(bytes, fileName) {
+  const mid = decodeMidi(bytes);
+  if (!mid.notes.length) throw new Error('В MIDI-файле нет нот');
+  const meter = mid.meter[0] > 0 && [1, 2, 4, 8, 16].includes(mid.meter[1]) ? mid.meter : [4, 4];
+  // The coarsest grid every note lands on: 1/8 if it fits, otherwise 1/16.
+  const on8 = mid.notes.every((n) => n.start % (mid.ppq / 2) === 0 && (n.end - n.start) % (mid.ppq / 2) === 0);
+  const step = on8 ? '1/8' : '1/16';
+  const tps = (mid.ppq * 4) / stepDen(step);
+  const barTicks = (mid.ppq * 4 * meter[0]) / meter[1];
+  const bars = Math.max(1, Math.ceil(Math.max(...mid.notes.map((n) => n.end)) / barTicks));
+
+  // Key: the root and mode whose scale covers the most note time.
+  const weight = new Array(12).fill(0);
+  for (const n of mid.notes) if (n.ch !== 9) weight[n.pitch % 12] += Math.max(1, n.end - n.start);
+  let best = { score: -1, root: 0, scale: 'major' };
+  for (const scale of ['major', 'natural-minor', 'harmonic-minor', 'dorian', 'mixolydian', 'phrygian']) {
+    for (let root = 0; root < 12; root++) {
+      const score = SCALES[scale].reduce((s, st) => s + weight[(root + st) % 12], 0) + weight[root] * 0.25;
+      if (score > best.score + 1e-9) best = { score, root, scale };
+    }
+  }
+
+  const groups = new Map();
+  for (const n of mid.notes) {
+    const key = `${n.track}:${n.ch}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(n);
+  }
+  const tune = parseTune({ format: TUNE_FORMAT, name: fileName.replace(/\.(mid|midi)$/i, ''),
+    brief: `imported from ${fileName}`, tempo: mid.tempo, meter, key: NOTE_NAMES[best.root], scale: best.scale,
+    profile: 'free', bars, channels: [] });
+  const total = bars * Math.round((meter[0] * stepDen(step)) / meter[1]);
+  let dropped = 0;
+  const pitched = [];
+  for (const [key, notes] of groups) {
+    const drums = notes[0].ch === 9;
+    const median = [...notes].map((n) => n.pitch).sort((a, b) => a - b)[Math.floor(notes.length / 2)];
+    let name = (mid.names[notes[0].track] || (drums ? 'drums' : `ch${notes[0].ch + 1}`)).replace(/[^\w-]+/g, '-').slice(0, 24) || 'ch';
+    for (let k = 2; tune.channels.some((c) => c.name === name); k++) name = `${name.replace(/\d+$/, '')}${k}`;
+    const ch = createChannel(name, { step, role: drums ? 'drums' : median < 52 ? 'bass' : 'melody' });
+    const sorted = [...notes].sort((a, b) => a.start - b.start || (ch.role === 'bass' ? a.pitch - b.pitch : b.pitch - a.pitch));
+    const placed = [];
+    if (drums) {
+      ch.voice = 'noise';
+      for (const n of sorted) {
+        const start = Math.round(n.start / tps);
+        if (placed.length && placed[placed.length - 1].start === start) { dropped++; continue; }
+        placed.push({ start, len: 1, mod: n.vel >= 110 ? '>' : '_', value: gmDrum(n.pitch) });
+      }
+    } else {
+      // The base octave that can spell the most of this channel's notes.
+      let bestOct = 4, bestCount = -1;
+      for (let oct = 0; oct <= 7; oct++) {
+        ch.octave = oct;
+        const can = new Set(candidates(tune, ch).map((c) => c.midi));
+        const count = notes.filter((n) => can.has(n.pitch)).length - Math.abs(oct - (Math.floor(median / 12) - 1)) * 0.01;
+        if (count > bestCount) { bestCount = count; bestOct = oct; }
+      }
+      ch.octave = bestOct;
+      for (const n of sorted) {
+        const start = Math.round(n.start / tps);
+        if (placed.length && placed[placed.length - 1].start === start) { dropped++; continue; }
+        const enc = encodePitch(tune, ch, n.pitch, false);
+        if (!enc) { dropped++; continue; }
+        placed.push({ start, len: Math.max(1, Math.round((n.end - n.start) / tps)), ...enc });
+      }
+      pitched.push({ ch, median });
+    }
+    ch.steps = notesToRow(placed, total);
+    tune.channels.push(ch);
+  }
+  pitched.sort((a, b) => b.median - a.median);
+  pitched.forEach(({ ch }, i) => {
+    if (ch.role === 'bass') { ch.voice = 'triangle'; return; }
+    ch.role = i === 0 ? 'melody' : 'harmony';
+    ch.voice = i === 0 ? 'pulse25' : 'pulse50';
+  });
+  const n = tune.channels.length;
+  for (const ch of tune.channels) ch.volume = Math.round(Math.min(0.4, 0.95 / n) * 100) / 100;
+  tune.profile = nesViolations(tune).length ? 'free' : 'nes';
+  return { tune, dropped };
+}
+
+/* ───────────────────────── Checks (a slice of tune lint) ───────────────────────── */
+
+function nesViolations(tune) {
+  const count = (pred) => tune.channels.filter(pred).length;
+  const out = [];
+  const pulses = count((c) => c.role !== 'drums' && c.voice.startsWith('pulse'));
+  const tri = count((c) => c.role !== 'drums' && c.voice === 'triangle');
+  const noise = count((c) => c.role === 'drums' || c.voice === 'noise');
+  if (pulses > 2) out.push(`пульсовых каналов ${pulses}, NES даёт два`);
+  if (tri > 1) out.push(`треугольных каналов ${tri}, NES даёт один`);
+  if (noise > 1) out.push(`шумовых каналов ${noise}, NES даёт один`);
+  if (tune.channels.some((c) => c.role !== 'drums' && (c.voice === 'saw' || c.voice === 'sine'))) out.push('saw и sine только в профиле free');
+  return out;
+}
+
+function lint(tune) {
+  const out = [];
+  for (const ch of tune.channels) {
+    let cells;
+    try { cells = parseCells(ch.steps); } catch (e) { out.push(['err', `${ch.name}: ${e.message}`]); continue; }
+    const want = totalSteps(tune, ch);
+    if (cells.length !== want) out.push(['err', `${ch.name}: ${cells.length} шагов вместо ${want} (сетка не совпадает)`]);
+    if (!rowNotes(ch).length) out.push(['warn', `${ch.name}: канал молчит`]);
+  }
+  if (tune.profile === 'nes') for (const v of nesViolations(tune)) out.push(['err', `nes: ${v}`]);
+  if (tune.profile === 'studio') out.push(['warn', 'профиль studio: здесь звучит чиптюн-приближение, настоящий звук — tune render']);
+  const sum = tune.channels.reduce((s, c) => s + c.volume, 0);
+  if (sum > 1.05) out.push(['warn', `сумма громкостей ${sum.toFixed(2)} — больше 1, возможен клиппинг`]);
+  if (lastPeak > 1) out.push(['warn', `пик ${lastPeak.toFixed(2)}: лимитер сжимает звук (клиппинг)`]);
+  return out;
+}
+
+/* ───────────────────────── State, undo, storage ───────────────────────── */
+
+const DEMO = JSON.parse(document.getElementById('demo').textContent);
+const STORE_KEY = 'forge-audio/tune';
+const COLORS = ['#6b8cff', '#ffc857', '#7bd88f', '#f27ea9', '#b48cff', '#5fd4e0', '#ff9f5a', '#c7d36b'];
+
+let tune = null;
+let active = 0;
+let selected = null;           // start step of the selected note in the active channel
+let lastLen = 2;
+let lastPeak = 0;
+const muted = new Set(), soloed = new Set();
+const undoStack = [], redoStack = [];
+
+function snapshot() { return JSON.stringify(tune); }
+function pushUndo(before) {
+  if (before === snapshot()) return;
+  undoStack.push(before);
+  if (undoStack.length > 300) undoStack.shift();
+  redoStack.length = 0;
+}
+function restore(json) { tune = parseTune(json); active = Math.min(active, Math.max(0, tune.channels.length - 1)); selected = null; changed(true); }
+function undo() { if (!undoStack.length) return; redoStack.push(snapshot()); restore(undoStack.pop()); }
+function redo() { if (!redoStack.length) return; undoStack.push(snapshot()); restore(redoStack.pop()); }
+
+function save() { try { localStorage.setItem(STORE_KEY, snapshot()); } catch { /* storage may be unavailable */ } }
+function loadInitial() {
+  try {
+    const stored = localStorage.getItem(STORE_KEY);
+    if (stored) return parseTune(stored);
+  } catch { /* fall back to the demo */ }
+  return parseTune(DEMO);
+}
+
+const ch = () => tune.channels[active];
+const audible = (i) => (soloed.size ? soloed.has(i) : !muted.has(i));
+
+/** Pads or trims every row to the track's length after bars or meter change. */
+function fitRows() {
+  for (const c of tune.channels) {
+    const total = totalSteps(tune, c);
+    const cells = cellStrings(c.steps).slice(0, total);
+    while (cells.length < total) cells.push('..');
+    c.steps = cells.join('');
+  }
+  if (tune.sections.length === 1 && tune.sections[0].from === 0) tune.sections[0].bars = tune.bars;
+}
+
+/* ───────────────────────── Audio ───────────────────────── */
+
+let actx = null, master = null, mix = null;
+const player = { src: null, playing: false, t0: 0, offset: 0, cursor: 0, loop: true, follow: true };
+
+function audio() {
+  if (!actx) {
+    actx = new AudioContext();
+    master = actx.createGain();
+    master.gain.value = Number($('master').value);
+    master.connect(actx.destination);
+  }
+  if (actx.state === 'suspended') actx.resume();
+  return actx;
+}
+
+function getMix() {
+  if (!mix) {
+    const r = renderMix(tune, audible);
+    lastPeak = r.peak;
+    const buf = audio().createBuffer(2, r.left.length, SR);
+    buf.copyToChannel(r.left, 0);
+    buf.copyToChannel(r.right, 1);
+    mix = { buf, seconds: r.seconds };
+  }
+  return mix;
+}
+
+function position() {
+  if (!player.playing) return player.cursor;
+  const d = mix ? mix.seconds : tuneSeconds(tune);
+  let p = actx.currentTime - player.t0 + player.offset;
+  if (player.loop) p %= d;
+  return Math.min(p, d);
+}
+
+function play(from = player.cursor) {
+  const m = getMix();
+  stopSource();
+  const src = actx.createBufferSource();
+  src.buffer = m.buf;
+  src.loop = player.loop;
+  src.connect(master);
+  from = Math.max(0, Math.min(from, m.seconds - 0.001));
+  src.start(0, from);
+  src.onended = () => {
+    if (player.src !== src) return;
+    player.playing = false; player.src = null; player.cursor = 0; updateTransport();
+  };
+  Object.assign(player, { src, playing: true, t0: actx.currentTime, offset: from });
+  updateTransport();
+  requestAnimationFrame(tick);
+}
+
+function stopSource() {
+  if (player.src) { const s = player.src; player.src = null; try { s.stop(); } catch { /* already stopped */ } }
+}
+
+function pause() { player.cursor = position(); player.playing = false; stopSource(); updateTransport(); draw(); }
+function togglePlay() { audio(); if (player.playing) pause(); else play(); }
+
+let restartTimer = 0;
+/** The document changed: drop the rendered mix and, when playing, restart from where we are. */
+function invalidateMix() {
+  mix = null;
+  if (!player.playing) return;
+  clearTimeout(restartTimer);
+  restartTimer = setTimeout(() => { if (player.playing) play(position()); }, 90);
+}
+
+function previewNote(channel, note) {
+  const a = audio();
+  const sec = Math.min(0.5, stepSeconds(tune, channel) * Math.max(1, note.steps));
+  const len = Math.round((note.drum ? 0.6 : sec + channel.envelope.release / 1000) * SR);
+  const data = new Float32Array(len);
+  renderNote(data, 0, tune, channel, { ...note, steps: sec / stepSeconds(tune, channel) }, stepSeconds(tune, channel));
+  const buf = a.createBuffer(1, len, SR);
+  buf.copyToChannel(data, 0);
+  const src = a.createBufferSource();
+  src.buffer = buf;
+  src.connect(master);
+  src.start();
+}
+
+function tick() {
+  if (!player.playing) return;
+  if (player.follow) {
+    const x = playheadX();
+    const sc = $('scroller'), view = sc.clientWidth - KEYS_W;
+    if (x < sc.scrollLeft || x > sc.scrollLeft + view - 40) sc.scrollLeft = Math.max(0, x - 40);
+  }
+  draw();
+  updateTime();
+  requestAnimationFrame(tick);
+}
+
+/* ───────────────────────── Piano roll ───────────────────────── */
+
+const KEYS_W = 78, RULER_H = 24;
+const $ = (id) => document.getElementById(id);
+const canvas = $('roll'), g = canvas.getContext('2d');
+let zoom = 1, showGhosts = true;
+
+function layout() {
+  const c = ch();
+  const den = stepDen(c.step);
+  const stepW = 14 * (16 / den) * zoom;
+  const total = Math.max(totalSteps(tune, c), parseCells(c.steps).length);
+  let rows;
+  if (c.role === 'drums') {
+    rows = DRUM_ORDER.map((letter) => ({ drum: DRUM_SYMBOLS[letter], letter, ok: true }));
+  } else {
+    const cands = candidates(tune, c);
+    const spell = new Map();
+    for (const x of cands) if (!spell.has(x.midi)) spell.set(x.midi, x);
+    const lo = Math.min(...spell.keys()), hi = Math.max(...spell.keys());
+    rows = [];
+    for (let m = hi; m >= lo; m--) rows.push({ midi: m, ok: spell.has(m), spell: spell.get(m) });
+  }
+  const rowH = c.role === 'drums' ? 26 : 16;
+  return { c, den, stepW, total, rows, rowH, width: total * stepW, height: rows.length * rowH };
+}
+
+function rowOf(L, note) {
+  if (L.c.role === 'drums') return L.rows.findIndex((r) => r.letter === note.value);
+  const midi = cellMidi(tune, L.c, note.mod, note.value);
+  return L.rows.findIndex((r) => r.midi === midi);
+}
+
+function sizeStage() {
+  const L = layout();
+  $('spacer').style.width = `${KEYS_W + L.width + 40}px`;
+  $('spacer').style.height = `${RULER_H + L.height}px`;
+  return L;
+}
+
+function playheadX() {
+  const c = ch();
+  return (position() / stepSeconds(tune, c)) * layout().stepW;
+}
+
+function roundRect(x, y, w, h, r) {
+  g.beginPath();
+  g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r);
+  g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath();
+}
+
+function draw() {
+  if (!tune.channels.length) { g.clearRect(0, 0, canvas.width, canvas.height); return; }
+  const sc = $('scroller');
+  const W = sc.clientWidth, H = sc.clientHeight, dpr = window.devicePixelRatio || 1;
+  if (canvas.width !== Math.round(W * dpr) || canvas.height !== Math.round(H * dpr)) {
+    canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+    canvas.style.width = `${W}px`; canvas.style.height = `${H}px`;
+  }
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const L = layout(), c = L.c, color = COLORS[active % COLORS.length];
+  const sx = sc.scrollLeft, sy = sc.scrollTop;
+  const per = stepsPerBar(tune, c), perBeat = Math.max(1, Math.round(L.den / tune.meter[1]));
+  const want = totalSteps(tune, c);
+  const { root } = keyOf(tune);
+
+  g.fillStyle = '#14151b';
+  g.fillRect(0, 0, W, H);
+
+  // The grid.
+  g.save();
+  g.beginPath(); g.rect(KEYS_W, RULER_H, W - KEYS_W, H - RULER_H); g.clip();
+  g.translate(KEYS_W - sx, RULER_H - sy);
+  const r0 = Math.max(0, Math.floor(sy / L.rowH)), r1 = Math.min(L.rows.length - 1, Math.floor((sy + H) / L.rowH));
+  for (let r = r0; r <= r1; r++) {
+    const row = L.rows[r], y = r * L.rowH;
+    if (!row.ok) {
+      g.fillStyle = '#101116';
+    } else if (row.midi !== undefined) {
+      const pc = ((row.midi % 12) + 12) % 12;
+      g.fillStyle = pc === root ? '#232838' : [1, 3, 6, 8, 10].includes(pc) ? '#191b23' : '#1d2029';
+    } else {
+      g.fillStyle = r % 2 ? '#1a1c24' : '#1e2029';
+    }
+    g.fillRect(0, y, L.width, L.rowH);
+    g.fillStyle = '#14151b';
+    g.fillRect(0, y + L.rowH - 1, L.width, 1);
+  }
+  const s0 = Math.max(0, Math.floor(sx / L.stepW)), s1 = Math.min(L.total, Math.ceil((sx + W) / L.stepW));
+  for (let s = s0; s <= s1; s++) {
+    const x = Math.round(s * L.stepW) + 0.5;
+    g.strokeStyle = s % per === 0 ? '#4a5066' : s % perBeat === 0 ? '#2e3240' : '#20232c';
+    g.beginPath(); g.moveTo(x, sy); g.lineTo(x, sy + H); g.stroke();
+  }
+  if (L.total > want) { g.fillStyle = '#ff6b6b22'; g.fillRect(want * L.stepW, sy, (L.total - want) * L.stepW, H); }
+
+  // Other channels, faint, wherever their pitch has a row here.
+  if (showGhosts && c.role !== 'drums') {
+    tune.channels.forEach((o, i) => {
+      if (i === active || o.role === 'drums') return;
+      const ratio = (16 / stepDen(o.step)) * 14 * zoom;
+      g.fillStyle = `${COLORS[i % COLORS.length]}38`;
+      for (const n of channelNotes(tune, o)) {
+        const r = L.rows.findIndex((row) => row.midi === n.midi);
+        if (r < 0) continue;
+        g.fillRect(n.stepIndex * ratio + 1, r * L.rowH + 3, n.steps * ratio - 2, L.rowH - 6);
+      }
+    });
+  }
+
+  // The active channel.
+  g.font = `600 10px ui-monospace, Consolas, monospace`;
+  g.textBaseline = 'middle';
+  for (const n of rowNotes(c)) {
+    const r = rowOf(L, n);
+    if (r < 0) continue;
+    const x = n.start * L.stepW + 1, y = r * L.rowH + 1;
+    const w = (c.role === 'drums' ? 1 : n.len) * L.stepW - 2, h = L.rowH - 2;
+    const isSel = n.start === selected;
+    roundRect(x, y, w, h, 3);
+    g.fillStyle = color;
+    g.globalAlpha = audible(active) ? 1 : 0.4;
+    g.fill();
+    g.globalAlpha = 1;
+    if (n.mod === '>') { g.fillStyle = '#ffffffcc'; g.fillRect(x + 2, y + 2, Math.max(2, w - 4), 2); }
+    if (isSel) { g.strokeStyle = '#ffffff'; g.lineWidth = 2; roundRect(x, y, w, h, 3); g.stroke(); g.lineWidth = 1; }
+    if (w > 22) { g.fillStyle = '#0d0f16'; g.fillText(n.mod + n.value, x + 4, y + h / 2 + 1); }
+  }
+  g.restore();
+
+  // The ruler.
+  g.save();
+  g.beginPath(); g.rect(KEYS_W, 0, W - KEYS_W, RULER_H); g.clip();
+  g.fillStyle = '#1b1d25'; g.fillRect(KEYS_W, 0, W, RULER_H);
+  g.translate(KEYS_W - sx, 0);
+  g.font = '11px system-ui, sans-serif'; g.textBaseline = 'middle';
+  for (let s = s0; s <= s1; s++) {
+    const x = Math.round(s * L.stepW) + 0.5;
+    if (s % per === 0) {
+      g.strokeStyle = '#6a7088'; g.beginPath(); g.moveTo(x, 4); g.lineTo(x, RULER_H); g.stroke();
+      g.fillStyle = s >= want ? '#ff6b6b' : '#c0c5d4'; g.fillText(String(s / per + 1), x + 4, 10);
+    } else if (s % perBeat === 0) {
+      g.strokeStyle = '#3a3f50'; g.beginPath(); g.moveTo(x, 16); g.lineTo(x, RULER_H); g.stroke();
+    }
+  }
+  for (const sec of tune.sections) {
+    if (tune.sections.length < 2) break;
+    const x = sec.from * per * L.stepW;
+    g.fillStyle = '#6b8cff'; g.fillText(sec.name, x + 18, 10);
+  }
+  g.restore();
+
+  // The playhead.
+  const px = playheadX() - sx + KEYS_W;
+  if (px >= KEYS_W && px <= W) {
+    g.strokeStyle = '#ffffff'; g.globalAlpha = 0.85;
+    g.beginPath(); g.moveTo(px + 0.5, RULER_H); g.lineTo(px + 0.5, H); g.stroke();
+    g.fillStyle = '#ffffff';
+    g.beginPath(); g.moveTo(px - 5, RULER_H - 8); g.lineTo(px + 6, RULER_H - 8); g.lineTo(px + 0.5, RULER_H); g.fill();
+    g.globalAlpha = 1;
+  }
+
+  // The keys column.
+  g.save();
+  g.beginPath(); g.rect(0, RULER_H, KEYS_W, H - RULER_H); g.clip();
+  g.translate(0, RULER_H - sy);
+  g.textBaseline = 'middle';
+  for (let r = r0; r <= r1; r++) {
+    const row = L.rows[r], y = r * L.rowH;
+    if (row.midi !== undefined) {
+      const pc = ((row.midi % 12) + 12) % 12, black = [1, 3, 6, 8, 10].includes(pc);
+      g.fillStyle = !row.ok ? '#15161c' : black ? '#2a2d38' : '#cfd3de';
+      g.fillRect(0, y, KEYS_W - 1, L.rowH - 1);
+      g.font = `${pc === root ? 700 : 400} 10px ui-monospace, Consolas, monospace`;
+      g.fillStyle = !row.ok ? '#3b3f4d' : black ? '#c0c5d4' : '#1b1d25';
+      g.fillText(midiName(row.midi), 5, y + L.rowH / 2);
+      if (row.ok) { g.fillStyle = black ? '#8a90a3' : '#5a6070'; g.fillText(row.spell.mod + row.spell.value, KEYS_W - 24, y + L.rowH / 2); }
+    } else {
+      g.fillStyle = '#22252f';
+      g.fillRect(0, y, KEYS_W - 1, L.rowH - 1);
+      g.font = '11px system-ui, sans-serif';
+      g.fillStyle = '#c0c5d4'; g.fillText(DRUM_LABELS[row.drum], 6, y + L.rowH / 2);
+      g.fillStyle = '#8a90a3'; g.fillText(row.letter, KEYS_W - 14, y + L.rowH / 2);
+    }
+  }
+  g.restore();
+  g.fillStyle = '#1b1d25'; g.fillRect(0, 0, KEYS_W, RULER_H);
+  g.fillStyle = color; g.font = '600 11px system-ui, sans-serif'; g.textBaseline = 'middle';
+  g.fillText(c.name.slice(0, 11), 6, RULER_H / 2);
+}
+
+/* ───────────────────────── Editing in the roll ───────────────────────── */
+
+let drag = null;
+
+function hitTest(e) {
+  const sc = $('scroller'), rect = sc.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  if (mx > sc.clientWidth || my > sc.clientHeight) return { area: 'none' };
+  const L = layout();
+  if (my < RULER_H) return { area: mx < KEYS_W ? 'none' : 'ruler', L, gx: mx - KEYS_W + sc.scrollLeft };
+  const gy = my - RULER_H + sc.scrollTop, row = Math.floor(gy / L.rowH);
+  if (mx < KEYS_W) return { area: 'keys', L, row };
+  const gx = mx - KEYS_W + sc.scrollLeft, step = Math.floor(gx / L.stepW);
+  const notes = rowNotes(L.c);
+  let note = null, edge = false;
+  for (const n of notes) {
+    const len = L.c.role === 'drums' ? 1 : n.len;
+    if (step >= n.start && step < n.start + len && rowOf(L, n) === row) {
+      note = n;
+      edge = L.c.role !== 'drums' && gx > (n.start + n.len) * L.stepW - 7;
+    }
+  }
+  return { area: 'grid', L, row, step, gx, note, edge, notes };
+}
+
+/** Puts `n` into `base`, keeping the channel one voice: it removes what starts under it and cuts what rings into it. */
+function place(base, n, total) {
+  const s = n.start, e = Math.min(total, n.start + n.len);
+  const out = [];
+  for (const m of base) {
+    if (m.start >= s && m.start < e) continue;
+    const copy = { ...m };
+    if (copy.start < s && copy.start + copy.len > s) copy.len = s - copy.start;
+    out.push(copy);
+  }
+  out.push({ ...n, len: e - s });
+  return out;
+}
+
+function writeNotes(notes) {
+  const c = ch();
+  c.steps = notesToRow(notes, totalSteps(tune, c));
+  invalidateMix();
+}
+
+function encodeRow(L, row, accent) {
+  const r = L.rows[row];
+  if (!r || !r.ok) return null;
+  if (L.c.role === 'drums') return { mod: accent ? '>' : '_', value: r.letter };
+  return encodePitch(tune, L.c, r.midi, accent);
+}
+
+function soundOf(c, n) {
+  return c.role === 'drums'
+    ? { drum: DRUM_SYMBOLS[n.value], midi: null, accent: n.mod === '>', steps: 1 }
+    : { drum: null, midi: cellMidi(tune, c, n.mod, n.value), accent: n.mod === '>', steps: Math.min(n.len, 2) };
+}
+
+function eraseAt(h) {
+  if (h.area !== 'grid' || !h.note) return;
+  writeNotes(h.notes.filter((n) => n !== h.note));
+  if (selected === h.note.start) selected = null;
+  draw();
+}
+
+function toggleAccent(n) {
+  const c = ch();
+  if (c.role !== 'drums' && n.mod !== '_' && n.mod !== '>') {
+    toast('Акцент «>» в формате возможен только в базовой октаве без знаков: эту ноту так не записать.');
+    return;
+  }
+  const before = snapshot();
+  writeNotes(rowNotes(c).map((m) => (m.start === n.start ? { ...m, mod: m.mod === '>' ? '_' : '>' } : m)));
+  pushUndo(before);
+  changed();
+}
+
+const scroller = $('scroller');
+scroller.addEventListener('contextmenu', (e) => e.preventDefault());
+scroller.addEventListener('pointerdown', (e) => {
+  if (!tune.channels.length) return;
+  const h = hitTest(e);
+  if (h.area === 'none') return;
+  audio();
+  if (h.area === 'ruler') {
+    const sec = (h.gx / h.L.stepW) * stepSeconds(tune, h.L.c);
+    drag = { mode: 'seek' };
+    seek(sec);
+    scroller.setPointerCapture(e.pointerId);
+    return;
+  }
+  if (h.area === 'keys') {
+    const r = h.L.rows[h.row];
+    if (r && r.ok) previewNote(h.L.c, h.L.c.role === 'drums' ? { drum: r.drum, midi: null, steps: 1 } : { midi: r.midi, drum: null, steps: 2 });
+    return;
+  }
+  if (h.step >= totalSteps(tune, h.L.c)) return;
+  const before = snapshot();
+  if (e.button === 2) {
+    drag = { mode: 'erase', before };
+    eraseAt(h);
+    scroller.setPointerCapture(e.pointerId);
+    return;
+  }
+  if (e.button !== 0) return;
+  if (h.note && e.shiftKey) { toggleAccent(h.note); return; }
+  if (h.note) {
+    selected = h.note.start;
+    drag = { mode: h.edge ? 'resize' : 'move', before, base: h.notes.filter((n) => n !== h.note),
+      orig: { ...h.note }, cur: { ...h.note }, grabStep: h.step, grabRow: h.row, moved: false };
+    if (!h.edge) previewNote(h.L.c, soundOf(h.L.c, h.note));
+  } else {
+    const enc = encodeRow(h.L, h.row, false);
+    if (!enc) { toast('Эту высоту формат записать не может: тёмные полосы — вне лада и октав канала.'); return; }
+    const n = { start: h.step, len: h.L.c.role === 'drums' ? 1 : lastLen, ...enc };
+    drag = { mode: 'create', before, base: h.notes, orig: n, cur: n, grabStep: h.step, moved: true };
+    selected = n.start;
+    writeNotes(place(drag.base, n, totalSteps(tune, h.L.c)));
+    previewNote(h.L.c, soundOf(h.L.c, n));
+  }
+  scroller.setPointerCapture(e.pointerId);
+  draw();
+});
+
+scroller.addEventListener('pointermove', (e) => {
+  if (!tune.channels.length) return;
+  const h = hitTest(e);
+  if (!drag) {
+    scroller.style.cursor = h.area === 'grid' ? (h.note ? (h.edge ? 'ew-resize' : 'grab') : 'crosshair')
+      : h.area === 'ruler' || h.area === 'keys' ? 'pointer' : 'default';
+    return;
+  }
+  if (drag.mode === 'seek') { if (h.gx !== undefined) seek((Math.max(0, h.gx) / h.L.stepW) * stepSeconds(tune, h.L.c)); return; }
+  if (drag.mode === 'erase') { eraseAt(h); return; }
+  if (h.area !== 'grid') return;
+  const L = h.L, total = totalSteps(tune, L.c), o = drag.orig;
+  const cur = { ...drag.cur };
+  if (drag.mode === 'create' || drag.mode === 'resize') {
+    if (L.c.role === 'drums') return;
+    cur.len = Math.max(1, Math.min(total - o.start, h.step - o.start + 1));
+  } else {
+    cur.start = Math.max(0, Math.min(total - (L.c.role === 'drums' ? 1 : o.len), o.start + h.step - drag.grabStep));
+    if (h.row !== drag.grabRow) {
+      const enc = encodeRow(L, h.row, o.mod === '>');
+      if (enc) Object.assign(cur, enc);
+    } else {
+      cur.mod = o.mod; cur.value = o.value;
+    }
+  }
+  if (cur.start === drag.cur.start && cur.len === drag.cur.len && cur.mod === drag.cur.mod && cur.value === drag.cur.value) return;
+  const pitchChanged = cur.value !== drag.cur.value || cur.mod !== drag.cur.mod;
+  drag.cur = cur;
+  drag.moved = true;
+  selected = cur.start;
+  writeNotes(place(drag.base, cur, total));
+  if (pitchChanged) previewNote(L.c, soundOf(L.c, cur));
+  draw();
+});
+
+function endDrag() {
+  if (!drag) return;
+  if (drag.before !== undefined) {
+    if (drag.cur && drag.mode !== 'move' && ch().role !== 'drums') lastLen = drag.cur.len;
+    pushUndo(drag.before);
+    if (drag.moved || drag.mode === 'erase') changed();
+  }
+  drag = null;
+}
+scroller.addEventListener('pointerup', endDrag);
+scroller.addEventListener('pointercancel', endDrag);
+scroller.addEventListener('scroll', () => draw());
+new ResizeObserver(() => draw()).observe($('rollWrap'));
+
+function seek(sec) {
+  const d = tuneSeconds(tune);
+  sec = Math.max(0, Math.min(sec, d - 0.001));
+  if (player.playing) play(sec); else { player.cursor = sec; updateTime(); draw(); }
+}
+
+function moveSelected(dStep, dRow) {
+  const c = ch();
+  const notes = rowNotes(c), n = notes.find((m) => m.start === selected);
+  if (!n) return;
+  const L = layout(), total = totalSteps(tune, c);
+  const cur = { ...n };
+  if (dStep) cur.start = Math.max(0, Math.min(total - (c.role === 'drums' ? 1 : n.len), n.start + dStep));
+  if (dRow) {
+    let r = rowOf(L, n);
+    do { r += dRow; } while (r >= 0 && r < L.rows.length && !L.rows[r].ok);
+    const enc = r >= 0 && r < L.rows.length ? encodeRow(L, r, n.mod === '>') : null;
+    if (!enc) return;
+    Object.assign(cur, enc);
+  }
+  const before = snapshot();
+  writeNotes(place(notes.filter((m) => m !== n), cur, total));
+  selected = cur.start;
+  pushUndo(before);
+  if (dRow) previewNote(c, soundOf(c, cur));
+  changed();
+}
+
+/* ───────────────────────── Side panel ───────────────────────── */
+
+const esc = (s) => String(s).replace(/[&<>"]/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[m]);
+const opts = (list, value, labels = {}) => list.map((v) => `<option value="${esc(v)}"${v === value ? ' selected' : ''}>${esc(labels[v] ?? v)}</option>`).join('');
+
+function rootName() { return NOTE_NAMES[parseRoot(tune.key)]; }
+
+function buildTrackForm() {
+  $('trackForm').innerHTML = `
+    <label>Имя</label><input type="text" data-t="name" value="${esc(tune.name)}">
+    <label>Бриф</label><input type="text" data-t="brief" value="${esc(tune.brief)}">
+    <label>Темп</label><div class="row2"><input type="number" data-t="tempo" min="20" max="400" value="${tune.tempo}"> <span class="hint">bpm</span></div>
+    <label>Тональность</label><div class="row2"><select data-t="key">${opts(NOTE_NAMES, rootName())}</select>
+      <select data-t="scale">${opts(Object.keys(SCALES), tune.scale, SCALE_LABELS)}</select></div>
+    <label>Размер</label><div class="row2"><input type="number" data-t="beats" min="1" max="16" value="${tune.meter[0]}" style="width:52px">/
+      <select data-t="unit">${opts(['2', '4', '8'], String(tune.meter[1]))}</select></div>
+    <label>Тактов</label><input type="number" data-t="bars" min="1" max="512" value="${tune.bars}">
+    <label>Профиль</label><select data-t="profile">${opts(['nes', 'free', 'studio'], tune.profile, { nes: 'nes — 2 пульса, треугольник, шум', free: 'free — без ограничений, панорама', studio: 'studio (звучит приближённо)' })}</select>`;
+}
+
+function buildChannels() {
+  $('channels').innerHTML = tune.channels.map((c, i) => `
+    <div class="chan${i === active ? ' active' : ''}" data-i="${i}">
+      <span class="sw" style="background:${COLORS[i % COLORS.length]}"></span>
+      <span class="nm">${esc(c.name)} <small>${esc(c.role === 'drums' ? 'барабаны' : c.voice)}</small></span>
+      <button class="m${muted.has(i) ? ' on' : ''}" data-act="mute" title="Заглушить">M</button>
+      <button class="s${soloed.has(i) ? ' on' : ''}" data-act="solo" title="Соло">S</button>
+      <button data-act="del" title="Удалить канал">×</button>
+    </div>`).join('') || '<p class="hint">Каналов нет — добавь первый.</p>';
+}
+
+function buildChanForm() {
+  const c = ch();
+  $('chanTitle').textContent = c ? `Канал «${c.name}»` : 'Канал';
+  if (!c) { $('chanForm').innerHTML = ''; return; }
+  const env = c.envelope;
+  const voices = c.role === 'drums' ? ['noise'] : VOICES.filter((v) => v !== 'noise' || c.voice === 'noise');
+  $('chanForm').innerHTML = `
+    <label>Имя</label><input type="text" data-c="name" value="${esc(c.name)}">
+    <label>Роль</label><select data-c="role">${opts(ROLES, c.role, ROLE_LABELS)}</select>
+    <label>Голос</label><select data-c="voice"${c.role === 'drums' ? ' disabled' : ''}>${opts(voices, c.voice)}</select>
+    <label>Шаг</label><select data-c="step">${opts(STEPS, c.step)}</select>
+    <label>Октава</label><input type="number" data-c="octave" min="0" max="8" value="${c.octave}"${c.role === 'drums' ? ' disabled' : ''}>
+    <label>Громкость <b id="volV">${c.volume.toFixed(2)}</b></label><input type="range" data-c="volume" min="0" max="1" step="0.01" value="${c.volume}">
+    <label>Панорама <b id="panV">${c.pan.toFixed(2)}</b></label><input type="range" data-c="pan" min="-1" max="1" step="0.05" value="${c.pan}"${tune.profile === 'nes' ? ' disabled title="В профиле nes звук моно"' : ''}>
+    ${c.role === 'drums' ? '' : `
+    <label>Атака, мс</label><input type="number" data-e="attack" min="0" max="2000" value="${env.attack}">
+    <label>Спад, мс</label><input type="number" data-e="decay" min="0" max="2000" value="${env.decay}">
+    <label>Сустейн</label><input type="number" data-e="sustain" min="0" max="1" step="0.05" value="${env.sustain}">
+    <label>Затухание, мс</label><input type="number" data-e="release" min="0" max="3000" value="${env.release}">`}
+    ${c.instrument ? `<label>Инструмент</label><span class="hint">${esc(c.instrument)} (studio)</span>` : ''}`;
+}
+
+function buildBottom() {
+  const c = ch();
+  $('rowName').textContent = c ? `«${c.name}»` : '';
+  if (c && document.activeElement !== $('rowText')) {
+    $('rowText').value = formatRow(tune, c, cellStrings(c.steps), 4);
+    $('rowMsg').innerHTML = '';
+  }
+  $('cli').textContent = c ? `npm run tune -- set ${tune.name || 'track'} --channel ${c.name} --steps "${formatRow(tune, c, cellStrings(c.steps))}"` : '';
+  $('grid').textContent = formatGrid(tune);
+  const items = lint(tune);
+  $('lint').innerHTML = items.length
+    ? items.map(([lvl, msg]) => `<div class="${lvl}">${lvl === 'err' ? '✗' : '!'} ${esc(msg)}</div>`).join('')
+    : `<div class="ok">✓ проверки пройдены · ${tuneSeconds(tune).toFixed(1)} с · сумма громкостей ${tune.channels.reduce((s, x) => s + x.volume, 0).toFixed(2)}</div>`;
+}
+
+let preEdit = null;
+function rememberBefore() { if (preEdit === null) preEdit = snapshot(); }
+function commitEdit() { if (preEdit !== null) { pushUndo(preEdit); preEdit = null; } }
+
+function resampleStep(c, newStep) {
+  const ratio = stepDen(newStep) / stepDen(c.step);
+  const notes = rowNotes(c).map((n) => ({ ...n, start: Math.round(n.start * ratio), len: Math.max(1, Math.round(n.len * ratio)) }));
+  c.step = newStep;
+  c.steps = notesToRow(notes, totalSteps(tune, c));
+}
+
+function applyTrackField(field, value, final) {
+  try {
+    if (field === 'name' || field === 'brief') tune[field] = value;
+    else if (field === 'tempo') { const v = Number(value); if (v >= 20 && v <= 400) tune.tempo = v; else return; }
+    else if (field === 'key') tune.key = value;
+    else if (field === 'scale') tune.scale = value;
+    else if (field === 'profile') tune.profile = value;
+    else if (field === 'beats' || field === 'unit' || field === 'bars') {
+      if (!final) return;
+      const v = Math.round(Number(value));
+      if (field === 'beats' && v >= 1 && v <= 16) tune.meter[0] = v;
+      if (field === 'unit') tune.meter[1] = v;
+      if (field === 'bars' && v >= 1 && v <= 512) tune.bars = v;
+      fitRows();
+    }
+  } catch (err) { toast(err.message); return; }
+  invalidateMix();
+  if (final) changed(); else { draw(); buildBottom(); }
+}
+
+function applyChanField(field, value, final) {
+  const c = ch();
+  if (field === 'name') { const v = value.trim().replace(/\s+/g, '-'); if (v) c.name = v; if (final) changed(); else buildChannels(); return; }
+  if (field === 'volume' || field === 'pan') {
+    c[field] = Number(value);
+    $(field === 'volume' ? 'volV' : 'panV').textContent = Number(value).toFixed(2);
+    invalidateMix();
+    if (final) changed();
+    return;
+  }
+  if (!final) return;
+  if (field === 'role') {
+    const wasDrums = c.role === 'drums', toDrums = value === 'drums';
+    if (wasDrums !== toDrums && rowNotes(c).length && !confirm('Барабанную строку нельзя превратить в нотную и наоборот — строка канала очистится. Продолжить?')) { buildChanForm(); return; }
+    c.role = value;
+    if (wasDrums !== toDrums) {
+      c.steps = '..'.repeat(totalSteps(tune, c));
+      c.voice = toDrums ? 'noise' : value === 'bass' ? 'triangle' : 'pulse25';
+    }
+  } else if (field === 'voice') c.voice = value;
+  else if (field === 'step') resampleStep(c, value);
+  else if (field === 'octave') { const v = Math.round(Number(value)); if (v >= 0 && v <= 8) c.octave = v; }
+  invalidateMix();
+  changed();
+}
+
+function wireForm(root, attr, apply) {
+  root.addEventListener('focusin', rememberBefore);
+  root.addEventListener('pointerdown', rememberBefore);
+  root.addEventListener('input', (e) => { const f = e.target.dataset[attr]; if (f) { rememberBefore(); apply(f, e.target.value, false); } });
+  root.addEventListener('change', (e) => { const f = e.target.dataset[attr]; if (f) { rememberBefore(); apply(f, e.target.value, true); commitEdit(); } });
+  root.addEventListener('focusout', () => setTimeout(commitEdit, 0));
+}
+wireForm($('trackForm'), 't', applyTrackField);
+wireForm($('chanForm'), 'c', applyChanField);
+$('chanForm').addEventListener('change', (e) => {
+  const f = e.target.dataset.e;
+  if (!f) return;
+  const v = Number(e.target.value);
+  if (Number.isFinite(v) && v >= 0) {
+    rememberBefore();
+    ch().envelope[f] = f === 'sustain' ? Math.min(1, v) : v;
+    commitEdit();
+    invalidateMix();
+    changed();
+  }
+});
+
+$('channels').addEventListener('click', (e) => {
+  const item = e.target.closest('.chan');
+  if (!item) return;
+  const i = Number(item.dataset.i), act = e.target.dataset.act;
+  if (act === 'mute') { muted.has(i) ? muted.delete(i) : muted.add(i); invalidateMix(); buildChannels(); draw(); return; }
+  if (act === 'solo') { soloed.has(i) ? soloed.delete(i) : soloed.add(i); invalidateMix(); buildChannels(); draw(); return; }
+  if (act === 'del') {
+    if (!confirm(`Удалить канал «${tune.channels[i].name}»?`)) return;
+    const before = snapshot();
+    tune.channels.splice(i, 1);
+    muted.clear(); soloed.clear();
+    active = Math.max(0, Math.min(active, tune.channels.length - 1));
+    pushUndo(before); invalidateMix(); changed(true);
+    return;
+  }
+  if (i !== active) { active = i; selected = null; changed(true); scrollToNotes(); }
+});
+
+function uniqueName(base) {
+  let name = base, k = 2;
+  while (tune.channels.some((c) => c.name === name)) name = `${base}${k++}`;
+  return name;
+}
+$('bAddChan').addEventListener('click', () => {
+  const before = snapshot();
+  const c = createChannel(uniqueName('voice'), { voice: 'pulse50', role: 'harmony', volume: 0.2 });
+  c.steps = '..'.repeat(totalSteps(tune, c));
+  tune.channels.push(c);
+  active = tune.channels.length - 1;
+  pushUndo(before); invalidateMix(); changed(true); scrollToNotes();
+});
+$('bDupChan').addEventListener('click', () => {
+  if (!ch()) return;
+  const before = snapshot();
+  const c = JSON.parse(JSON.stringify(ch()));
+  c.name = uniqueName(c.name);
+  tune.channels.splice(active + 1, 0, c);
+  active++;
+  pushUndo(before); invalidateMix(); changed(true);
+});
+
+/* ───────────────────────── Tracker text ───────────────────────── */
+
+let rowBefore = null, rowTimer = 0;
+$('rowText').addEventListener('focus', () => { rowBefore = snapshot(); });
+$('rowText').addEventListener('input', () => {
+  clearTimeout(rowTimer);
+  rowTimer = setTimeout(() => {
+    const c = ch();
+    try {
+      const cells = parseCells($('rowText').value);
+      validateCells(cells, c);
+      c.steps = cells.map((x) => x.mod + x.value).join('');
+      const want = totalSteps(tune, c);
+      $('rowMsg').innerHTML = cells.length === want
+        ? `<span class="ok">✓ ${cells.length} шагов</span>`
+        : `<span class="warn">! ${cells.length} шагов, а в ${tune.bars} тактах их ${want}</span>`;
+      invalidateMix(); draw(); buildBottom();
+    } catch (err) {
+      $('rowMsg').innerHTML = `<span class="err">✗ ${esc(err.message)}</span>`;
+    }
+  }, 250);
+});
+$('rowText').addEventListener('blur', () => {
+  if (rowBefore !== null) { pushUndo(rowBefore); rowBefore = null; }
+  save(); buildBottom();
+});
+$('bCopy').addEventListener('click', () => {
+  navigator.clipboard?.writeText($('cli').textContent).then(() => toast('Скопировано'), () => toast('Не удалось скопировать'));
+});
+
+/* ───────────────────────── Files ───────────────────────── */
+
+function download(bytes, name, type) {
+  const url = URL.createObjectURL(new Blob([bytes], { type }));
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+const fileBase = () => (tune.name || 'track').replace(/[^\w.-]+/g, '-');
+
+$('bSaveTune').addEventListener('click', () => download(`${JSON.stringify(tune, null, 2)}\n`, `${fileBase()}.tune.json`, 'application/json'));
+$('bSaveMidi').addEventListener('click', () => download(encodeMidi(tune), `${fileBase()}.mid`, 'audio/midi'));
+$('bSaveWav').addEventListener('click', () => {
+  const r = renderMix(tune);
+  download(encodeWav(r.left, r.right), `${fileBase()}.wav`, 'audio/wav');
+});
+$('bOpen').addEventListener('click', () => $('file').click());
+$('file').addEventListener('change', (e) => { if (e.target.files[0]) openFile(e.target.files[0]); e.target.value = ''; });
+
+async function openFile(file) {
+  try {
+    const before = snapshot();
+    if (/\.midi?$/i.test(file.name)) {
+      const { tune: t, dropped } = midiToTune(new Uint8Array(await file.arrayBuffer()), file.name);
+      tune = t;
+      toast(`MIDI: ${t.channels.length} канал(ов), ${t.key} ${SCALE_LABELS[t.scale]}, ${t.tempo} bpm${dropped ? ` · отброшено нот: ${dropped} (аккорды или вне лада)` : ''}`);
+    } else {
+      tune = parseTune(await file.text());
+      toast(`Открыт «${tune.name || file.name}»`);
+    }
+    pushUndo(before);
+    active = 0; selected = null; muted.clear(); soloed.clear();
+    player.cursor = 0;
+    if (player.playing) pause();
+    invalidateMix(); changed(true); scrollToNotes();
+  } catch (err) {
+    toast(`Не открылось: ${err.message}`);
+  }
+}
+
+let dragDepth = 0;
+window.addEventListener('dragenter', (e) => { e.preventDefault(); dragDepth++; $('drop').classList.add('show'); });
+window.addEventListener('dragleave', () => { if (--dragDepth <= 0) { dragDepth = 0; $('drop').classList.remove('show'); } });
+window.addEventListener('dragover', (e) => e.preventDefault());
+window.addEventListener('drop', (e) => {
+  e.preventDefault(); dragDepth = 0; $('drop').classList.remove('show');
+  const f = e.dataTransfer.files[0];
+  if (f) openFile(f);
+});
+
+$('bDemo').addEventListener('click', () => {
+  const before = snapshot();
+  tune = parseTune(DEMO);
+  pushUndo(before);
+  active = 0; selected = null; muted.clear(); soloed.clear();
+  invalidateMix(); changed(true); scrollToNotes();
+});
+
+/* ───────────────────────── Transport and keys ───────────────────────── */
+
+function fmt(sec) { return `${Math.floor(sec / 60)}:${(sec % 60).toFixed(1).padStart(4, '0')}`; }
+function updateTime() { $('time').textContent = `${fmt(position())} / ${fmt(tuneSeconds(tune))}`; }
+function updateTransport() {
+  $('bPlay').textContent = player.playing ? '❚❚ Пауза' : '▶ Играть';
+  $('bPlay').classList.toggle('on', player.playing);
+  updateTime();
+}
+
+$('bPlay').addEventListener('click', togglePlay);
+$('bHome').addEventListener('click', () => seek(0));
+$('bLoop').addEventListener('click', () => {
+  player.loop = !player.loop;
+  $('bLoop').classList.toggle('on', player.loop);
+  if (player.src) player.src.loop = player.loop;
+});
+$('bFollow').addEventListener('click', () => { player.follow = !player.follow; $('bFollow').classList.toggle('on', player.follow); });
+$('bGhost').addEventListener('click', () => { showGhosts = !showGhosts; $('bGhost').classList.toggle('on', showGhosts); draw(); });
+$('bUndo').addEventListener('click', undo);
+$('bRedo').addEventListener('click', redo);
+$('zoom').addEventListener('input', (e) => {
+  const sc = $('scroller'), centre = (sc.scrollLeft + sc.clientWidth / 2) / zoom;
+  zoom = Number(e.target.value);
+  sizeStage();
+  sc.scrollLeft = centre * zoom - sc.clientWidth / 2;
+  draw();
+});
+$('master').addEventListener('input', (e) => { if (master) master.gain.value = Number(e.target.value); });
+$('bHelp').addEventListener('click', () => $('help').classList.add('show'));
+$('bHelpClose').addEventListener('click', () => $('help').classList.remove('show'));
+$('help').addEventListener('click', (e) => { if (e.target === $('help')) $('help').classList.remove('show'); });
+
+window.addEventListener('keydown', (e) => {
+  const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName);
+  if ((e.ctrlKey || e.metaKey) && !typing) {
+    const k = e.key.toLowerCase();
+    if (k === 'z' && !e.shiftKey) { e.preventDefault(); undo(); return; }
+    if (k === 'y' || (k === 'z' && e.shiftKey)) { e.preventDefault(); redo(); return; }
+  }
+  if (typing) return;
+  if (e.key === ' ') { e.preventDefault(); togglePlay(); return; }
+  if (e.key === 'Escape') { $('help').classList.remove('show'); selected = null; draw(); return; }
+  if (selected === null || !ch()) return;
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    e.preventDefault();
+    const before = snapshot();
+    writeNotes(rowNotes(ch()).filter((n) => n.start !== selected));
+    selected = null; pushUndo(before); changed();
+    return;
+  }
+  const moves = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] };
+  if (moves[e.key]) { e.preventDefault(); moveSelected(...moves[e.key]); }
+});
+
+/* ───────────────────────── Refresh ───────────────────────── */
+
+let toastTimer = 0;
+function toast(msg) {
+  $('toast').textContent = msg;
+  $('toast').classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => $('toast').classList.remove('show'), 3600);
+}
+
+/** Re-reads everything from the document. `full` also rebuilds the forms. */
+function changed(full = false) {
+  if (full || !document.activeElement || !$('trackForm').contains(document.activeElement)) buildTrackForm();
+  buildChannels();
+  if (full || !$('chanForm').contains(document.activeElement)) buildChanForm();
+  if (tune.channels.length) sizeStage();
+  buildBottom();
+  updateTime();
+  draw();
+  save();
+}
+
+function scrollToNotes() {
+  if (!ch()) return;
+  const L = layout(), notes = rowNotes(L.c);
+  const rows = notes.map((n) => rowOf(L, n)).filter((r) => r >= 0);
+  const sc = $('scroller');
+  if (rows.length) {
+    const mid = (Math.min(...rows) + Math.max(...rows)) / 2;
+    sc.scrollTop = Math.max(0, mid * L.rowH - (sc.clientHeight - RULER_H) / 2);
+  } else {
+    sc.scrollTop = Math.max(0, (L.height - sc.clientHeight) / 2);
+  }
+}
+
+tune = loadInitial();
+changed(true);
+scrollToNotes();
+</script>
+</body>
+</html>
