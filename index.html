@@ -283,6 +283,8 @@ function parseTune(input) {
     setLanes(out, Array.isArray(ch.steps) ? (ch.steps.length ? ch.steps.map(String) : ['']) : [String(ch.steps ?? '')]);
     // Studio fields are carried through untouched, so a studio track survives a round trip.
     for (const key of ['instrument', 'fx', 'humanize', 'dynamics', 'sample']) if (ch[key] !== undefined) out[key] = ch[key];
+    if (ch.articulation !== undefined) out.articulation = parseArticulation(ch.articulation, out.name);
+    if (ch.shape !== undefined) out.shape = parseShape(ch.shape, out.name);
     return out;
   });
   const sections = (Array.isArray(data.sections) ? data.sections : []).map((s) => ({
@@ -297,8 +299,28 @@ function parseTune(input) {
   if (data.master !== undefined) tune.master = data.master;
   parseRoot(tune.key);
   if (!SCALES[tune.scale]) throw new Error(`Неизвестный лад: ${tune.scale}`);
-  for (const ch of channels) for (const row of channelLanes(ch)) validateCells(parseCells(row), ch);
+  for (const ch of channels) for (const row of channelLanes(ch)) validateCells(parseCells(row), ch, tune.profile);
   return tune;
+}
+
+/** The articulations a channel may name (port of ARTICULATIONS in tune.ts). */
+const ARTICULATIONS = ['normal', 'ring', 'legato'];
+
+function parseArticulation(value, name) {
+  if (!ARTICULATIONS.includes(value)) throw new Error(`Канал ${name}: articulation бывает ${ARTICULATIONS.join(', ')}, а не ${value}`);
+  return value;
+}
+
+function parseShape(value, name) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error(`Канал ${name}: shape должен быть объектом вида { attack, release }`);
+  const shape = {};
+  for (const key of ['attack', 'release']) {
+    if (value[key] === undefined) continue;
+    const ms = value[key];
+    if (typeof ms !== 'number' || !Number.isFinite(ms) || ms < 0 || ms > 10000) throw new Error(`Канал ${name}: shape.${key} — от 0 до 10000 мс, а не ${ms}`);
+    shape[key] = ms;
+  }
+  return shape;
 }
 
 function stepDen(step) {
@@ -319,10 +341,33 @@ function parseCells(steps) {
   return cells;
 }
 
-function validateCells(cells, ch) {
+/** The hold a cell stands for (`-`, `<`, `>` or `~`), or null when it is not a hold cell (port of holdChar). */
+function holdChar(c) {
+  if (c.value === '-') return '-';
+  if (c.mod === c.value && (c.value === '<' || c.value === '>' || c.value === '~')) return c.value;
+  return null;
+}
+
+const SHAPE_STUDIO_ONLY = 'пометки формы ноты бывают только в студийных треках';
+
+/** Checks a lane's cells; `<<` `>>` `~~` are holds of a studio track only. */
+function validateCells(cells, ch, profile) {
+  let sounding = false;
   cells.forEach((c, i) => {
-    if (c.value === '-' || c.value === '.') return;
     const where = `ячейка ${i + 1} («${c.mod}${c.value}»)`;
+    const hold = holdChar(c);
+    if (hold !== null) {
+      if (hold === '-') return;
+      if (profile !== 'studio') throw new Error(`${where}: ${SHAPE_STUDIO_ONLY}`);
+      if (!sounding) throw new Error(`${where}: пометка формы не продолжает никакую ноту`);
+      if (hold === '~') {
+        const next = cells[i + 1];
+        if (!next || next.value === '.' || holdChar(next) !== null) throw new Error(`${where}: за «~~» должна идти нота`);
+      }
+      return;
+    }
+    if (c.value === '.') { sounding = false; return; }
+    sounding = true;
     if (ch.role === 'drums') {
       if (!DRUM_SYMBOLS[c.value]) throw new Error(`${where}: неизвестный барабан — бывают k s h o c p t r`);
     } else {
@@ -347,14 +392,18 @@ function withLanes(ch, lanes) { return { ...ch, steps: lanes.length === 1 ? lane
 /** Writes lanes into the channel in place, by the rule of `withLanes`. */
 function setLanes(ch, lanes) { ch.steps = withLanes(ch, lanes).steps; }
 
-/** One lane as editable notes: `{start, len, mod, value, lane}`, holds folded into `len`. */
+/**
+ * One lane as editable notes: `{start, len, holds, mod, value, lane}`. `len` counts the held
+ * steps; `holds` keeps one character per held step (`-` hold, `<` grow, `>` fade, `~` slur).
+ */
 function laneRowNotes(row, lane) {
   const notes = [];
   let current = null;
   parseCells(row).forEach((c, i) => {
-    if (c.value === '-') { if (current) current.len++; return; }
+    const hold = holdChar(c);
+    if (hold !== null) { if (current) { current.len++; current.holds += hold; } return; }
     if (c.value === '.') { current = null; return; }
-    current = { start: i, len: 1, mod: c.mod, value: c.value, lane };
+    current = { start: i, len: 1, holds: '', mod: c.mod, value: c.value, lane };
     notes.push(current);
   });
   return notes;
@@ -363,15 +412,44 @@ function laneRowNotes(row, lane) {
 /** Every lane of a channel as one flat list of editable notes, lane-major. */
 function rowNotes(ch) { return channelLanes(ch).flatMap((row, lane) => laneRowNotes(row, lane)); }
 
-/** Notes back into a row of exactly `total` cells. A later head overwrites an earlier hold. */
+/**
+ * A note's holds fitted to its length: a new note holds with `-`; a longer one gets `-`
+ * inserted before a trailing `~` (the slur stays last); a shorter one is cut before it.
+ */
+function fitHolds(n) {
+  const want = Math.max(0, n.len - 1);
+  const holds = n.holds ?? '';
+  if (holds.length === want) return holds;
+  if (!want) return '';
+  const slur = holds.endsWith('~'), body = slur ? holds.slice(0, -1) : holds;
+  const room = slur ? want - 1 : want;
+  const fitted = body.length >= room ? body.slice(0, room) : body + '-'.repeat(room - body.length);
+  return slur ? fitted + '~' : fitted;
+}
+
+/**
+ * Notes back into a row of exactly `total` cells, each held step written as its hold.
+ * A later head overwrites an earlier hold; a slur `~~` that no note follows right after becomes `--`.
+ */
 function notesToRow(notes, total) {
   const cells = Array.from({ length: total }, () => '..');
   for (const n of [...notes].sort((a, b) => a.start - b.start)) {
     if (n.start < 0 || n.start >= total) continue;
     cells[n.start] = n.mod + n.value;
-    for (let i = 1; i < n.len && n.start + i < total; i++) cells[n.start + i] = '--';
+    const holds = fitHolds(n);
+    for (let i = 1; i < n.len && n.start + i < total; i++) cells[n.start + i] = holds[i - 1].repeat(2);
+  }
+  for (let i = 0; i < total; i++) {
+    if (cells[i] !== '~~') continue;
+    const next = i + 1 < total ? { mod: cells[i + 1][0], value: cells[i + 1][1] } : null;
+    if (!next || next.value === '.' || holdChar(next) !== null) cells[i] = '--';
   }
   return cells.join('');
+}
+
+/** Whether any lane of the track holds a note-shape mark (`<<` `>>` `~~`). */
+function hasShapeMarks(tune) {
+  return tune.channels.some((c) => channelLanes(c).some((row) => parseCells(row).some((x) => { const h = holdChar(x); return h !== null && h !== '-'; })));
 }
 
 function keyOf(tune) { return { root: parseRoot(tune.key), scale: tune.scale }; }
@@ -408,7 +486,7 @@ function encodePitch(tune, ch, midi, accent) {
 /** Notes a renderer plays, every lane, lane-major: pitched carry `midi`, drums carry `drum`. */
 function channelNotes(tune, ch) {
   return rowNotes(ch).map((n) => ({
-    stepIndex: n.start, steps: n.len, accent: n.mod === '>',
+    stepIndex: n.start, steps: n.len, holds: n.holds, accent: n.mod === '>',
     drum: ch.role === 'drums' ? DRUM_SYMBOLS[n.value] : null,
     midi: ch.role === 'drums' ? null : cellMidi(tune, ch, n.mod, n.value),
     lane: n.lane,
@@ -437,7 +515,8 @@ function noteHeight(tune, ch, n) { return ch.role === 'drums' ? -DRUM_ORDER.inde
 
 /**
  * Packs a flat list of notes into at most MAX_LANES lane rows of `total` cells.
- * Notes are taken by start (ties: the higher pitch first); each keeps the lane `prefer`
+ * Notes are taken by start (ties: notes that had a lane first, so a new note does not push an
+ * old one — or a slurred pair — out of its lane; then the higher pitch first); each keeps the lane `prefer`
  * names (by default its previous one) when that lane is free for its whole span, and
  * otherwise takes the lowest free lane. Taking notes in start order means a lane is free
  * exactly when its last note has ended, so a note is only refused where four already sound.
@@ -448,7 +527,8 @@ function packLanes(tune, ch, notes, total, prefer = (n) => n.lane) {
   const order = notes
     .filter((n) => n.start >= 0 && n.start < total)
     .map((n) => ({ ...n, len: Math.max(1, Math.min(n.len, total - n.start)) }))
-    .sort((a, b) => a.start - b.start || noteHeight(tune, ch, b) - noteHeight(tune, ch, a) || (a.lane ?? 0) - (b.lane ?? 0));
+    .sort((a, b) => a.start - b.start || (a.lane === undefined) - (b.lane === undefined)
+      || noteHeight(tune, ch, b) - noteHeight(tune, ch, a) || (a.lane ?? 0) - (b.lane ?? 0));
   const ends = new Array(MAX_LANES).fill(0), lanes = [], placed = [], overflow = [];
   for (const n of order) {
     const want = prefer(n, placed);
@@ -1793,7 +1873,10 @@ function applyTrackField(field, value, final) {
     else if (field === 'tempo') { const v = Number(value); if (v >= 20 && v <= 400) tune.tempo = v; else return; }
     else if (field === 'key') tune.key = value;
     else if (field === 'scale') tune.scale = value;
-    else if (field === 'profile') tune.profile = value;
+    else if (field === 'profile') {
+      if (value !== 'studio' && hasShapeMarks(tune)) { buildTrackForm(); throw new Error(`В треке есть «<<», «>>» или «~~»: ${SHAPE_STUDIO_ONLY}.`); }
+      tune.profile = value;
+    }
     else if (field === 'beats' || field === 'unit' || field === 'bars') {
       if (!final) return;
       const v = Math.round(Number(value));
@@ -1925,7 +2008,7 @@ function applyLaneText() {
     const msg = area.nextElementSibling;
     try {
       const cells = parseCells(area.value);
-      validateCells(cells, c);
+      validateCells(cells, c, tune.profile);
       const row = cells.map((x) => x.mod + x.value).join('');
       const empty = !laneRowNotes(row, i).length;
       if (i === 0 || !empty) lanes.push(row);
