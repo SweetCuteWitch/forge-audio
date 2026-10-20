@@ -1,4 +1,4 @@
-// source-hash: bd9eb6d51bee7c3f1c5d6950511f3012db419c8a704c2158562b5417a7ece12b
+// source-hash: 433ffbbafb87e6d19caddcbb917021645ef817141407edf398201a27d159371b
 // src/sound/dsp.ts
 var dbToGain = (db) => 10 ** (db / 20);
 var gainToDb = (gain) => 20 * Math.log10(Math.max(gain, 1e-9));
@@ -411,21 +411,23 @@ function subtractive(target, offset, job, spec) {
   const oscs = spec.cents.map(() => new SawOsc(job.rng()));
   const filter = new Biquad("lowpass", 1e3, rate, spec.q);
   const held = job.samples / rate;
+  const settled = job.legato ? spec.env[0] + spec.env[1] + 3 * spec.filterDecay : 0;
   let subPhase = 0;
   const velBright = spec.velocityBrightness ?? 0.5;
   for (let i = 0; i < n; i++) {
     const at = offset + i;
     if (at < 0 || at >= target.length) continue;
     const t = i / rate;
-    const amp = adsr(t, held, ...spec.env);
+    const te = t + settled;
+    const amp = adsr(te, held + settled, ...spec.env);
     if (amp <= 0 && t > held) continue;
     let vib = 1;
-    if (spec.vibrato && t > spec.vibrato.delay) {
-      const ramp = Math.min(1, (t - spec.vibrato.delay) / 0.3);
-      vib = cents(Math.sin(2 * Math.PI * spec.vibrato.rate * t) * spec.vibrato.depthCents * ramp);
+    if (spec.vibrato && te > spec.vibrato.delay) {
+      const ramp = Math.min(1, (te - spec.vibrato.delay) / 0.3);
+      vib = cents(Math.sin(2 * Math.PI * spec.vibrato.rate * te) * spec.vibrato.depthCents * ramp);
     }
     if (i % CONTROL === 0) {
-      const open = spec.cutoff[2] + (spec.cutoff[1] - spec.cutoff[2]) * Math.exp(-t / spec.filterDecay);
+      const open = spec.cutoff[2] + (spec.cutoff[1] - spec.cutoff[2]) * Math.exp(-te / spec.filterDecay);
       const closed = spec.cutoff[0];
       let mult = Math.max(closed, open) * (1 - velBright + velBright * (0.5 + job.velocity));
       if (spec.wobble) mult *= 1 + 0.35 * Math.sin(2 * Math.PI * spec.wobble * t);
@@ -508,12 +510,13 @@ function flute(target, offset, job) {
   const n = total(job, 0.15);
   const held = job.samples / rate;
   const breath = new Biquad("bandpass", Math.min(job.freq * 2, rate * 0.4), rate, 2);
+  const settled = job.legato ? 0.17 : 0;
   let phase = 0;
   for (let i = 0; i < n; i++) {
     const at = offset + i;
     if (at < 0 || at >= target.length) continue;
     const t = i / rate;
-    const amp = adsr(t, held, 0.07, 0.1, 0.85, 0.15);
+    const amp = adsr(t + settled, held + settled, 0.07, 0.1, 0.85, 0.15);
     const vib = t > 0.25 ? cents(Math.sin(2 * Math.PI * 5 * t) * 8 * Math.min(1, (t - 0.25) / 0.3)) : 1;
     phase += job.freq * vib / rate;
     const tone = Math.sin(2 * Math.PI * phase) + 0.22 * Math.sin(4 * Math.PI * phase) + 0.07 * Math.sin(6 * Math.PI * phase);
@@ -803,7 +806,7 @@ var STUDIO_DRUM_TAIL = {
 };
 
 // src/web/protocol.ts
-var BUNDLE_VERSION = true ? "bd9eb6d5 2026-10-20" : "dev";
+var BUNDLE_VERSION = true ? "433ffbba 2026-10-20" : "dev";
 var DEFAULT_SAMPLE_BASE_URL = "https://raw.githubusercontent.com/SweetCuteWitch/forge-audio/main/samples/";
 function synthList() {
   return Object.entries(INSTRUMENTS).filter(([id]) => id !== "sampler").map(([id, i]) => ({ id, low: i.low, high: i.high, role: i.role, description: i.description }));
@@ -1165,6 +1168,7 @@ var DRUM_LETTERS = {
   tom: "t",
   ride: "r"
 };
+var ARTICULATIONS = ["normal", "ring", "legato"];
 var DEFAULT_ENVELOPE = { attack: 0, decay: 60, sustain: 0.7, release: 90 };
 function createChannel(name, options = {}) {
   return {
@@ -1187,6 +1191,17 @@ function stepDenominator(step) {
   const denominator = Number(match[2]);
   if (numerator !== 1) throw new ForgeFormatError(`Only 1/N steps are supported, got ${step}`);
   return denominator;
+}
+function stepsPerBar(tune, channel) {
+  const [beats, beatUnit] = tune.meter;
+  return Math.round(beats * stepDenominator(channel.step) / beatUnit);
+}
+function holdChar(cell) {
+  if (cell.value === "-") return "-";
+  if (cell.mod === cell.value && (cell.value === "<" || cell.value === ">" || cell.value === "~")) {
+    return cell.value;
+  }
+  return null;
 }
 function parseCells(steps) {
   const body = steps.replace(/[|\s]/g, "");
@@ -1212,8 +1227,22 @@ function rowNotes(tune, channel, row, lane) {
   const notes = [];
   let current = null;
   cells.forEach((cell, index) => {
-    if (cell.value === "-") {
-      if (current) current.steps++;
+    const hold = holdChar(cell);
+    if (hold !== null) {
+      if (!current) {
+        if (hold === "-") return;
+        throw new ForgeFormatError(
+          `A hold cell "${cell.mod}${cell.value}" at step ${index + 1} follows no note`
+        );
+      }
+      current.steps++;
+      current.holds += hold;
+      if (hold === "~") {
+        const next = cells[index + 1];
+        if (!next || next.value === "." || holdChar(next) !== null) {
+          throw new ForgeFormatError(`"~~" at step ${index + 1} must be followed by a note`);
+        }
+      }
       return;
     }
     if (cell.value === ".") {
@@ -1223,7 +1252,7 @@ function rowNotes(tune, channel, row, lane) {
     const drum = DRUM_SYMBOLS[cell.value];
     if (channel.role === "drums") {
       if (!drum) throw new ForgeFormatError(`Unknown drum symbol: ${cell.value}`);
-      current = { stepIndex: index, steps: 1, midi: null, drum, accent: cell.mod === ">", lane };
+      current = { stepIndex: index, steps: 1, holds: "", midi: null, drum, accent: cell.mod === ">", lane };
       notes.push(current);
       return;
     }
@@ -1236,6 +1265,7 @@ function rowNotes(tune, channel, row, lane) {
     current = {
       stepIndex: index,
       steps: 1,
+      holds: "",
       midi: degreeToMidi(root, scale, degree, channel.octave + octaveShift, accidental),
       drum: null,
       accent: cell.mod === ">",
@@ -1247,6 +1277,30 @@ function rowNotes(tune, channel, row, lane) {
 }
 function tuneSeconds(tune) {
   return tune.bars * tune.meter[0] * 60 / tune.tempo;
+}
+function parseArticulation(value, name) {
+  if (!ARTICULATIONS.includes(value)) {
+    throw new ForgeFormatError(
+      `Channel ${name}: articulation must be ${ARTICULATIONS.join(", ")}, got ${String(value)}`
+    );
+  }
+  return value;
+}
+function parseShape(value, name) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new ForgeFormatError(`Channel ${name}: shape must be an object like { attack, release }`);
+  }
+  const raw = value;
+  const shape = {};
+  for (const key of ["attack", "release"]) {
+    if (raw[key] === void 0) continue;
+    const ms = raw[key];
+    if (typeof ms !== "number" || !Number.isFinite(ms) || ms < 0 || ms > 1e4) {
+      throw new ForgeFormatError(`Channel ${name}: shape.${key} must be 0 \u2026 10000 ms, got ${String(ms)}`);
+    }
+    shape[key] = ms;
+  }
+  return shape;
 }
 function parseTune(input) {
   const data = typeof input === "string" ? JSON.parse(input) : input;
@@ -1272,7 +1326,9 @@ function parseTune(input) {
       ...channel.fx !== void 0 ? { fx: channel.fx } : {},
       ...channel.humanize !== void 0 ? { humanize: Number(channel.humanize) } : {},
       ...channel.dynamics !== void 0 ? { dynamics: Number(channel.dynamics) } : {},
-      ...channel.sample !== void 0 ? { sample: channel.sample } : {}
+      ...channel.sample !== void 0 ? { sample: channel.sample } : {},
+      ...channel.articulation !== void 0 ? { articulation: parseArticulation(channel.articulation, String(channel.name)) } : {},
+      ...channel.shape !== void 0 ? { shape: parseShape(channel.shape, String(channel.name)) } : {}
     });
   });
   const sections = (Array.isArray(data.sections) ? data.sections : []).map((raw) => {
@@ -1624,7 +1680,7 @@ function renderSampledHit(inst, target, offset, hit, rrIndex) {
   const outRate = hit.sampleRate;
   const ratio = 2 ** ((hit.midi + varCents / 100 - z.root) / 12) * (loaded.sampleRate / outRate);
   const gain = hit.gain * 10 ** (((z.gainDb ?? 0) + varDb) / 20);
-  const start = Math.min(len - 2, startMs / 1e3 * loaded.sampleRate);
+  const start = Math.min(len - 2, (startMs / 1e3 + (hit.skipSeconds ?? 0)) * loaded.sampleRate);
   const at = (k) => {
     const i = k < 0 ? 0 : k >= len ? len - 1 : k;
     if (nc === 1) return chans[0][i];
@@ -1649,7 +1705,7 @@ function renderSampledHit(inst, target, offset, hit, rrIndex) {
   const edgeN = Math.max(1, Math.round(EDGE_FADE_S * outRate));
   const sourceEnd = looping ? Infinity : Math.ceil((len - 1 - start) / ratio);
   const held = Math.max(0, Math.round(hit.heldSamples));
-  const relN = Math.max(edgeN, Math.round(m.release * outRate));
+  const relN = Math.max(edgeN, Math.round((hit.releaseSeconds ?? m.release) * outRate));
   const noteEnd = hit.drum ? Infinity : held + relN;
   const n = Math.min(sourceEnd, noteEnd);
   if (!Number.isFinite(n)) return;
@@ -1739,6 +1795,100 @@ function loudnessLufs(channels, rate) {
   return lufs(use.reduce((a, b) => a + b, 0) / use.length);
 }
 
+// src/sound/articulation.ts
+var SHAPE_FLOOR_DB = -30;
+var LEGATO_FADE_S = 0.03;
+function channelUsesShape(channel, notes) {
+  if (channel.articulation !== void 0 && channel.articulation !== "normal") return true;
+  if (channel.shape !== void 0) return true;
+  return notes.some((note) => /[<>~]/.test(note.holds));
+}
+function boundaryLevels(note) {
+  if (!/[<>]/.test(note.holds)) return null;
+  const modes = [note.holds[0] === "<" ? "<" : "-", ...note.holds.split("")];
+  const levels = [note.holds[0] === "<" ? SHAPE_FLOOR_DB : 0];
+  let k = 0;
+  while (k < modes.length) {
+    let end = k + 1;
+    if (modes[k] === "<" || modes[k] === ">") {
+      while (end < modes.length && modes[end] === modes[k]) end++;
+    }
+    const from = levels[k];
+    const target = modes[k] === "<" ? 0 : modes[k] === ">" ? SHAPE_FLOOR_DB : from;
+    const run = end - k;
+    for (let i = 1; i <= run; i++) levels.push(from + (target - from) * i / run);
+    k = end;
+  }
+  return levels;
+}
+function buildCurve(note, length, stepSamples) {
+  const levels = boundaryLevels(note);
+  if (!levels) return null;
+  const curve = new Float32Array(length);
+  const last = levels[levels.length - 1];
+  for (let i = 0; i < length; i++) {
+    const pos = i / stepSamples;
+    const k = Math.floor(pos);
+    const dbValue = k >= levels.length - 1 ? last : levels[k] + (levels[k + 1] - levels[k]) * (pos - k);
+    curve[i] = Math.pow(10, dbValue / 20);
+  }
+  return curve;
+}
+function planChannel(tune, channel, notes, rate) {
+  const stepSeconds2 = 60 / tune.tempo * (4 / stepDenominator(channel.step));
+  const stepSamples = stepSeconds2 * rate;
+  const articulation = channel.articulation ?? "normal";
+  const totalSteps = tune.bars * stepsPerBar(tune, channel);
+  const lanes = channelLanes(channel);
+  const rests = lanes.map((row) => {
+    const set = [];
+    parseCells(row).forEach((cell, index) => {
+      if (cell.value === ".") set.push(index);
+    });
+    return set;
+  });
+  const byLane = /* @__PURE__ */ new Map();
+  for (const note of notes) {
+    const list = byLane.get(note.lane) ?? [];
+    list.push(note);
+    byLane.set(note.lane, list);
+  }
+  const position = /* @__PURE__ */ new Map();
+  for (const list of byLane.values()) {
+    list.sort((a, b) => a.stepIndex - b.stepIndex);
+    list.forEach((n, i) => position.set(n, i));
+  }
+  const joins = (prev, next) => prev.holds.endsWith("~") || articulation === "legato" && prev.stepIndex + prev.steps === next.stepIndex;
+  return notes.map((note) => {
+    const list = byLane.get(note.lane);
+    const at = position.get(note);
+    const prev = at > 0 ? list[at - 1] : null;
+    const next = at < list.length - 1 ? list[at + 1] : null;
+    const noteEnd = note.stepIndex + note.steps;
+    const legatoOut = next !== null && joins(note, next) && noteEnd === next.stepIndex;
+    const ring = articulation === "ring" && !legatoOut;
+    let endStep = noteEnd;
+    if (ring) {
+      const rest = rests[note.lane]?.find((r) => r >= noteEnd);
+      endStep = Math.max(endStep, rest ?? totalSteps);
+    }
+    const start = Math.round(note.stepIndex * stepSamples);
+    const held = Math.max(1, Math.round(endStep * stepSamples) - start);
+    const ownLength = Math.min(held, Math.max(1, Math.round(noteEnd * stepSamples) - start));
+    return {
+      note,
+      start,
+      held,
+      ring,
+      legatoIn: prev !== null && joins(prev, note) && prev.stepIndex + prev.steps === note.stepIndex,
+      legatoOut,
+      curve: buildCurve(note, ownLength, stepSamples),
+      attackMs: channel.shape?.attack ?? 0,
+      releaseMs: channel.shape?.release ?? null
+    };
+  });
+}
+
 // src/sound/studio.ts
 function instrumentOf(channel) {
   if (channel.instrument && isInstrument(channel.instrument)) return channel.instrument;
@@ -1795,6 +1945,197 @@ function studioLength(tune, options = {}) {
   const tailSeconds = options.tail ?? 3;
   return { body, total: body + Math.round(tailSeconds * rate) };
 }
+var LEGATO_SKIP_S = 0.08;
+var SYNTH_TAIL_S = 10;
+var RING_CAP_S = 8;
+function voicesOf(plans, stepSamples) {
+  const voices = /* @__PURE__ */ new Map();
+  for (let i = 0; i < plans.length; i++) {
+    const first = plans[i];
+    let j = i;
+    while (j + 1 < plans.length && plans[j].legatoOut && plans[j + 1].legatoIn && plans[j + 1].note.lane === first.note.lane && first.note.drum === null && plans[j + 1].note.midi !== null && plans[j + 1].note.midi === first.note.midi) j++;
+    const last = plans[j];
+    const base = first.start;
+    const held = last.start - base + last.held;
+    const own = Math.max(1, Math.round((last.note.stepIndex + last.note.steps) * stepSamples) - base);
+    let curve = null;
+    if (plans.slice(i, j + 1).some((p) => p.curve !== null)) {
+      const lastLength = last.curve ? last.curve.length : 1;
+      curve = new Float32Array(last.start - base + lastLength).fill(1);
+      for (let k = i; k <= j; k++) {
+        const p = plans[k];
+        if (!p.curve) continue;
+        const from = p.start - base;
+        const to = k < j ? plans[k + 1].start - base : curve.length;
+        for (let x = from; x < to; x++) curve[x] = p.curve[Math.min(x - from, p.curve.length - 1)];
+      }
+    }
+    voices.set(i, { first, last, held, own, curve });
+    i = j;
+  }
+  return voices;
+}
+function zoneLoops(inst, zone) {
+  const z = inst.manifest.zones[zone];
+  return inst.manifest.sustain && z.loopStart !== void 0 && z.loopEnd !== void 0 && z.loopEnd > z.loopStart;
+}
+function skipOf(inst, zone) {
+  const z = inst.manifest.zones[zone];
+  const loaded = inst.zones[zone];
+  if (z.loopStart !== void 0 && loaded) return z.loopStart / loaded.sampleRate;
+  return LEGATO_SKIP_S;
+}
+function quietVelocity(inst, midi) {
+  const zones = inst.manifest.zones;
+  let pool = zones.filter((z) => midi >= z.lo && midi <= z.hi);
+  if (pool.length === 0) pool = zones;
+  const layers = new Set(pool.map((z) => `${z.velLo}:${z.velHi}`));
+  if (layers.size < 2) return null;
+  return Math.min(...pool.map((z) => z.velLo));
+}
+function crossfadeLayers(full, soft, curve, held) {
+  let ef = 0;
+  let es = 0;
+  for (let i = 0; i < held; i++) {
+    ef += full[i] * full[i];
+    es += soft[i] * soft[i];
+  }
+  const match = es > 0 ? Math.sqrt(ef / es) : 0;
+  for (let i = 0; i < full.length; i++) {
+    const level = gainToDb(curve[Math.min(i, curve.length - 1)]);
+    const w = Math.min(1, Math.max(0, (level - SHAPE_FLOOR_DB) / -SHAPE_FLOOR_DB));
+    full[i] = Math.sqrt(w) * full[i] + Math.sqrt(1 - w) * soft[i] * match;
+  }
+}
+function renderShapedNotes(ctx) {
+  const { tune, channel, notes, rate, scratch, rng, humanize, instrument, sampled, sample } = ctx;
+  const plans = planChannel(tune, channel, notes, rate);
+  const voices = voicesOf(plans, stepSeconds(tune, channel) * rate);
+  const fadeN = Math.max(1, Math.round(LEGATO_FADE_S * rate));
+  let rrIndex = 0;
+  for (let pass = 0; pass < ctx.repeats; pass++) {
+    const passOffset = pass * ctx.loopSeconds;
+    const laneShift = /* @__PURE__ */ new Map();
+    for (let n = 0; n < plans.length; n++) {
+      const plan = plans[n];
+      const note = plan.note;
+      const jitter = channel.role === "drums" ? 0.35 : 1;
+      const timing = (rng() - 0.5) * 0.012 * humanize * jitter;
+      let shift = Math.round((passOffset + timing) * rate);
+      if (plan.legatoIn && laneShift.has(note.lane)) shift = laneShift.get(note.lane);
+      shift = Math.max(shift, -plan.start);
+      laneShift.set(note.lane, shift);
+      const start = plan.start + shift;
+      let hitVelocity = 0;
+      let velocity = 0;
+      let midi = note.midi;
+      if (sampled) {
+        hitVelocity = layerVelocity(channel.dynamics, note.accent, (rng() - 0.5) * 0.1 * humanize);
+        if (note.drum) {
+          const root = sampled.manifest.drums?.[DRUM_LETTERS[note.drum]];
+          midi = root === void 0 ? null : root;
+        }
+        if (midi === null) continue;
+      } else {
+        const dyn = 1 + (rng() - 0.5) * 0.2 * humanize;
+        velocity = Math.min(1, channel.volume * (note.accent ? ACCENT_GAIN : 1) * dyn);
+      }
+      if (note.drum) {
+        if (sampled) {
+          renderSampledHit(sampled, scratch, start, {
+            midi,
+            velocity: hitVelocity,
+            heldSamples: plan.held,
+            sampleRate: rate,
+            rng,
+            humanize,
+            gain: channel.volume,
+            drum: true
+          }, rrIndex++);
+        } else {
+          renderStudioDrum(scratch, start, note.drum, velocity, rate, rng);
+        }
+        continue;
+      }
+      if (midi === null) continue;
+      const voice = voices.get(n);
+      if (!voice) continue;
+      const room = Math.max(0, scratch.length - start);
+      const { first, last, curve } = voice;
+      const legatoIn = first.legatoIn;
+      const legatoOut = last.legatoOut;
+      const join = voice.held;
+      let holdLen = legatoOut ? join + fadeN : voice.held;
+      const attackN = legatoIn ? 0 : Math.round(first.attackMs / 1e3 * rate);
+      const releaseMs = last.releaseMs;
+      let body;
+      if (sampled) {
+        const m = sampled.manifest;
+        const zone = chooseZone(m, midi, hitVelocity, rrIndex);
+        if (last.ring && zone >= 0 && !zoneLoops(sampled, zone)) {
+          holdLen = Math.min(holdLen, voice.own + Math.round(RING_CAP_S * rate));
+        }
+        const releaseSeconds = releaseMs === null ? void 0 : releaseMs / 1e3;
+        const relN = Math.round((releaseSeconds ?? m.release) * rate) + 2;
+        const length = Math.min(room, legatoOut ? join + fadeN : holdLen + relN);
+        const hitOf = (vel, z, draw) => ({
+          midi,
+          velocity: vel,
+          heldSamples: holdLen,
+          sampleRate: rate,
+          rng: draw,
+          humanize,
+          gain: channel.volume,
+          drum: false,
+          releaseSeconds,
+          ...legatoIn && z >= 0 ? { skipSeconds: skipOf(sampled, z) } : {}
+        });
+        body = new Float32Array(length);
+        const drawn = [];
+        const record = () => {
+          const v = rng();
+          drawn.push(v);
+          return v;
+        };
+        renderSampledHit(sampled, body, 0, hitOf(hitVelocity, zone, record), rrIndex);
+        const quiet = curve ? quietVelocity(sampled, midi) : null;
+        const quietZone = quiet === null ? -1 : chooseZone(m, midi, quiet, rrIndex);
+        if (curve && quiet !== null && quietZone >= 0 && zone >= 0 && (m.zones[quietZone].velLo !== m.zones[zone].velLo || m.zones[quietZone].velHi !== m.zones[zone].velHi)) {
+          let k = 0;
+          const replay = () => k < drawn.length ? drawn[k++] : rng();
+          const soft = new Float32Array(length);
+          renderSampledHit(sampled, soft, 0, hitOf(quiet, quietZone, replay), rrIndex);
+          crossfadeLayers(body, soft, curve, Math.min(join, length));
+        }
+        rrIndex++;
+      } else {
+        const skipN = legatoIn ? Math.round(LEGATO_SKIP_S * rate) : 0;
+        const releaseN = releaseMs === null || legatoOut ? 0 : Math.max(1, Math.round(releaseMs / 1e3 * rate));
+        const tail = legatoOut ? fadeN : releaseN > 0 ? releaseN : Math.round(SYNTH_TAIL_S * rate);
+        const length = Math.min(room, (legatoOut ? join : holdLen) + tail);
+        const raw = new Float32Array(length + skipN);
+        renderNote(instrument, raw, 0, {
+          freq: midiToFreq(midi),
+          samples: Math.max(1, holdLen + releaseN + skipN),
+          velocity,
+          sampleRate: rate,
+          rng,
+          sample,
+          ...legatoIn ? { legato: true } : {}
+        });
+        body = skipN > 0 ? raw.subarray(skipN) : raw;
+        if (releaseN > 0) for (let i = holdLen; i < length; i++) body[i] *= Math.max(0, 1 - (i - holdLen) / releaseN);
+      }
+      for (let i = 0; i < body.length; i++) {
+        let g = curve ? curve[Math.min(i, curve.length - 1)] : 1;
+        if (i < attackN) g *= i / attackN;
+        if (legatoIn && i < fadeN) g *= Math.sin(Math.PI / 2 * (i / fadeN));
+        if (legatoOut && i >= join) g *= i - join < fadeN ? Math.cos(Math.PI / 2 * ((i - join) / fadeN)) : 0;
+        scratch[start + i] += body[i] * g;
+      }
+    }
+  }
+}
 function renderChannel(tune, channel, options = {}) {
   const rate = options.sampleRate ?? 44100;
   const repeats = Math.max(1, Math.floor(options.repeats ?? 1));
@@ -1820,7 +2161,9 @@ function renderChannel(tune, channel, options = {}) {
     const root = /^\d+$/.test(channel.sample.root) ? Number(channel.sample.root) : nameToMidi(channel.sample.root);
     sample = options.loadSample(channel.sample.file, root, channel.sample.loop === true);
   }
-  for (let pass = 0; pass < repeats; pass++) {
+  if (channelUsesShape(channel, notes)) {
+    renderShapedNotes({ tune, channel, notes, rate, repeats, loopSeconds, scratch, rng, humanize, instrument, sampled, sample });
+  } else for (let pass = 0; pass < repeats; pass++) {
     const passOffset = pass * loopSeconds;
     for (const note of notes) {
       const jitter = channel.role === "drums" ? 0.35 : 1;
