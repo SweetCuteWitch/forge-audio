@@ -1,0 +1,135 @@
+{
+  "format": "forge/catalog@1",
+  "instruments": [
+    {
+      "id": "electric-bass",
+      "name": "Electric bass",
+      "category": "bass",
+      "description": "a Squier Jazz Bass played with the fingers, recorded direct",
+      "role": "bass",
+      "low": 28,
+      "high": 60,
+      "licence": "CC0-1.0"
+    },
+    {
+      "id": "trombone",
+      "name": "Tenor trombone",
+      "category": "brass",
+      "description": "a tenor trombone, sustained without vibrato, two to three dynamics, in stereo",
+      "role": "harmony",
+      "low": 34,
+      "high": 65,
+      "licence": "CC0-1.0"
+    },
+    {
+      "id": "trumpet",
+      "name": "Trumpet",
+      "category": "brass",
+      "description": "a trumpet, sustained without vibrato, two dynamics, in stereo",
+      "role": "melody",
+      "low": 52,
+      "high": 84,
+      "licence": "CC0-1.0"
+    },
+    {
+      "id": "acoustic-kit",
+      "name": "Acoustic drum kit",
+      "category": "drums",
+      "description": "a rock drum kit in stereo: kick, snare, hats, ride, crash, mid tom; p is the kit's second snare sound, 'snare rest' (no clap)",
+      "role": "drums",
+      "low": 48,
+      "high": 65,
+      "licence": "CC-BY-4.0"
+    },
+    {
+      "id": "clean-guitar",
+      "name": "Clean electric guitar",
+      "category": "guitar",
+      "description": "a Fender electric guitar, bridge pickup, through a clean amp",
+      "role": "harmony",
+      "low": 40,
+      "high": 86,
+      "licence": "CC0-1.0"
+    },
+    {
+      "id": "nylon-guitar",
+      "name": "Nylon guitar",
+      "category": "guitar",
+      "description": "a Spanish classical guitar, plucked",
+      "role": "harmony",
+      "low": 40,
+      "high": 83,
+      "licence": "CC0-1.0"
+    },
+    {
+      "id": "overdrive-guitar",
+      "name": "Overdriven electric guitar",
+      "category": "guitar",
+      "description": "a Fender electric guitar, bridge pickup, through an overdriven amp",
+      "role": "harmony",
+      "low": 40,
+      "high": 86,
+      "licence": "CC0-1.0"
+    },
+    {
+      "id": "steel-guitar",
+      "name": "Steel-string guitar",
+      "category": "guitar",
+      "description": "a Martin HD28 steel-string acoustic guitar, plucked",
+      "role": "harmony",
+      "low": 40,
+      "high": 84,
+      "licence": "CC0-1.0"
+    },
+    {
+      "id": "grand-piano",
+      "name": "Grand piano",
+      "category": "keys",
+      "description": "a Yamaha C5 concert grand (Salamander), in stereo",
+      "role": "harmony",
+      "low": 21,
+      "high": 108,
+      "licence": "CC-BY-3.0"
+    },
+    {
+      "id": "pipe-organ",
+      "name": "Pipe organ",
+      "category": "keys",
+      "description": "a church pipe organ (Rode), manual 3 open principal, loud registration, in stereo",
+      "role": "harmony",
+      "low": 36,
+      "high": 96,
+      "licence": "CC0-1.0"
+    },
+    {
+      "id": "concert-marimba",
+      "name": "Concert marimba",
+      "category": "mallets",
+      "description": "a concert marimba with yarn mallets, three dynamics (soft, medium, loud), in stereo",
+      "role": "melody",
+      "low": 41,
+      "high": 96,
+      "licence": "CC0-1.0"
+    },
+    {
+      "id": "choir",
+      "name": "Choir aahs",
+      "category": "voices",
+      "description": "a mixed choir singing \"aah\" (FluidR3 Choir Aahs, as in MuseScore_General), in stereo",
+      "role": "harmony",
+      "low": 36,
+      "high": 84,
+      "licence": "MIT"
+    },
+    {
+      "id": "concert-flute",
+      "name": "Concert flute",
+      "category": "woodwinds",
+      "description": "a concert flute, sustained without vibrato, two dynamics, in stereo",
+      "role": "melody",
+      "low": 60,
+      "high": 96,
+      "licence": "CC0-1.0"
+    }
+  ]
+}
