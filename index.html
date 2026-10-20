@@ -1082,6 +1082,8 @@ const SAMPLE_BASE = /^(localhost|127\.0\.0\.1)$/.test(location.hostname)
 const studio = {
   worker: null, nextId: 1, pending: new Map(),
   sentDoc: null, sentAudible: null,
+  /** The latest document and mute sends; a render waits for both, so it never renders a document the worker refused. */
+  docSent: Promise.resolve(), audibleSent: Promise.resolve(),
   call(msg, onProgress) {
     if (!this.worker) {
       this.worker = new Worker('forge-sound-worker.js', { type: 'module' });
@@ -1126,20 +1128,24 @@ function audibleNames() {
 /** What a studio mix was rendered from: the document and the channels heard. */
 const studioKey = () => `${snapshot()}\n${JSON.stringify(audibleNames())}`;
 
-/** Sends the worker the document and the audible channels, if they changed since the last send. */
+/**
+ * Sends the worker the document and the audible channels, if they changed since the last send.
+ * Resolves once the worker has confirmed the latest of each, including a send made earlier and
+ * still in flight; rejects when it refused one (that send is then retried on the next sync).
+ */
 function studioSync() {
-  const jobs = [];
   const doc = snapshot();
   if (doc !== studio.sentDoc) {
     studio.sentDoc = doc;
-    jobs.push(studio.update(tune).catch((err) => { studio.sentDoc = null; throw err; }));
+    studio.docSent = studio.update(tune).catch((err) => { if (studio.sentDoc === doc) studio.sentDoc = null; throw err; });
   }
   const names = JSON.stringify(audibleNames());
   if (names !== studio.sentAudible) {
     studio.sentAudible = names;
-    jobs.push(studio.audible(JSON.parse(names)).catch((err) => { studio.sentAudible = null; throw err; }));
+    studio.audibleSent = studio.audible(JSON.parse(names))
+      .catch((err) => { if (studio.sentAudible === names) studio.sentAudible = null; throw err; });
   }
-  return Promise.all(jobs);
+  return Promise.all([studio.docSent, studio.audibleSent]);
 }
 
 function showProgress(p) {

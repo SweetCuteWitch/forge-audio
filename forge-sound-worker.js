@@ -1,4 +1,4 @@
-// source-hash: 1e0894c616390baff8b496b98dbeb9969367d0c0c6e19c0bfcf2319b1dd69f76
+// source-hash: bd9eb6d51bee7c3f1c5d6950511f3012db419c8a704c2158562b5417a7ece12b
 // src/sound/dsp.ts
 var dbToGain = (db) => 10 ** (db / 20);
 var gainToDb = (gain) => 20 * Math.log10(Math.max(gain, 1e-9));
@@ -803,7 +803,7 @@ var STUDIO_DRUM_TAIL = {
 };
 
 // src/web/protocol.ts
-var BUNDLE_VERSION = true ? "1e0894c6 2026-10-20" : "dev";
+var BUNDLE_VERSION = true ? "bd9eb6d5 2026-10-20" : "dev";
 var DEFAULT_SAMPLE_BASE_URL = "https://raw.githubusercontent.com/SweetCuteWitch/forge-audio/main/samples/";
 function synthList() {
   return Object.entries(INSTRUMENTS).filter(([id]) => id !== "sampler").map(([id, i]) => ({ id, low: i.low, high: i.high, role: i.role, description: i.description }));
@@ -1426,10 +1426,18 @@ function channelPitches(tune, channel, m) {
   return [...out].sort((a, b) => a - b);
 }
 function neededZones(m, pitches) {
+  const sizes = /* @__PURE__ */ new Map();
+  let rrCount = 0;
+  for (const z of m.zones) {
+    const key = `${z.root}/${z.velLo}/${z.velHi}`;
+    const n = (sizes.get(key) ?? 0) + 1;
+    sizes.set(key, n);
+    rrCount = Math.max(rrCount, n);
+  }
   const out = /* @__PURE__ */ new Set();
   for (const p of pitches) {
     for (let v = 1; v <= 127; v++) {
-      for (let rr = 0; rr < m.zones.length; rr++) out.add(chooseZone(m, p, v, rr));
+      for (let rr = 0; rr < rrCount; rr++) out.add(chooseZone(m, p, v, rr));
     }
   }
   out.delete(-1);
@@ -1495,7 +1503,7 @@ var SampleLoader = class {
     onProgress?.({ instrument: id, done, total: total2 });
     const files = /* @__PURE__ */ new Map();
     await Promise.all(missing.map(async (i) => {
-      files.set(i, await this.zoneBytes(m, i));
+      files.set(i, await this.zoneBytes(id, m, i));
       onProgress?.({ instrument: id, done: ++done, total: total2 });
     }));
     const built = buildInstrument(m, files);
@@ -1512,19 +1520,22 @@ var SampleLoader = class {
     }
     if (res.status === 404) throw new UnknownInstrumentError(id, `instrument "${id}": not in the sample library`);
     if (!res.ok) throw new Error(`instrument "${id}": instrument.json: HTTP ${res.status}`);
-    return parseInstrumentManifest(await res.json());
+    const manifest = parseInstrumentManifest(await res.json());
+    if (manifest.id !== id) throw new Error(`instrument "${id}": its manifest says id "${manifest.id}"`);
+    return manifest;
   }
-  async zoneBytes(m, index) {
+  /** Zone URLs are built from the requested id, the one the manifest was fetched under. */
+  async zoneBytes(id, m, index) {
     const zone = m.zones[index];
-    const url = `${this.deps.baseUrl}${m.id}/${zone.file}`;
+    const url = `${this.deps.baseUrl}${id}/${zone.file}`;
     const valid = async (d) => d.length === zone.bytes && await this.deps.sha256(d) === zone.sha256;
     const cached = await this.deps.cache.get(url);
     if (cached) {
       if (await valid(cached)) return cached;
       await this.deps.cache.delete(url);
     }
-    const data = await this.download(m.id, zone.file, url);
-    if (!await valid(data)) throw new Error(`instrument "${m.id}": ${zone.file} failed its checksum`);
+    const data = await this.download(id, zone.file, url);
+    if (!await valid(data)) throw new Error(`instrument "${id}": ${zone.file} failed its checksum`);
     await this.deps.cache.put(url, data);
     return data;
   }
@@ -1542,17 +1553,37 @@ var SampleLoader = class {
 var CACHE_NAME = "forge-samples-v1";
 function browserDeps(baseUrl2) {
   let opened;
-  const open = () => opened ??= globalThis.caches.open(CACHE_NAME);
+  const open = () => {
+    if (!opened) {
+      const storage = globalThis.caches;
+      const p = storage ? Promise.resolve().then(() => storage.open(CACHE_NAME)) : Promise.reject(new Error("no Cache Storage"));
+      opened = p;
+      p.catch(() => {
+        if (opened === p) opened = void 0;
+      });
+    }
+    return opened;
+  };
   const cache = {
     async get(url) {
-      const hit = await (await open()).match(url);
-      return hit ? new Uint8Array(await hit.arrayBuffer()) : void 0;
+      try {
+        const hit = await (await open()).match(url);
+        return hit ? new Uint8Array(await hit.arrayBuffer()) : void 0;
+      } catch {
+        return void 0;
+      }
     },
     async put(url, data) {
-      await (await open()).put(url, new Response(data));
+      try {
+        await (await open()).put(url, new Response(data));
+      } catch {
+      }
     },
     async delete(url) {
-      await (await open()).delete(url);
+      try {
+        await (await open()).delete(url);
+      } catch {
+      }
     }
   };
   return {
