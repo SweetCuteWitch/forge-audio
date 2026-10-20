@@ -37,10 +37,10 @@
       "hi": 54,
       "velLo": 63,
       "velHi": 127,
-      "loopStart": 85174,
-      "loopEnd": 157862,
-      "sha256": "3836dba4f40a04f0eae0f520b8cabaf763a503579f5efa67ad8127111b8ccce8",
-      "bytes": 333147
+      "loopStart": 84234,
+      "loopEnd": 152372,
+      "sha256": "58525e0a7c5c8a70af63da9567820f78d1fd9f60c4e0b90e84d0691b63970f8b",
+      "bytes": 321972
     },
     {
       "file": "zones/n57-v1-r1.flac",
@@ -121,10 +121,10 @@
       "hi": 68,
       "velLo": 1,
       "velHi": 62,
-      "loopStart": 122982,
-      "loopEnd": 226377,
-      "sha256": "cff8d416412194d861b3b64e11f8b21cea4e4da5a7cc16259fe0a0a879ea553c",
-      "bytes": 193600
+      "loopStart": 144636,
+      "loopEnd": 228395,
+      "sha256": "dfd9057bb4bf9afa3a72a0d7ab4b04bac99e87dfed5d98d5c7a57679422da666",
+      "bytes": 195228
     },
     {
       "file": "zones/n67-v2-r1.flac",
@@ -145,10 +145,10 @@
       "hi": 71,
       "velLo": 1,
       "velHi": 62,
-      "loopStart": 124639,
-      "loopEnd": 234996,
-      "sha256": "75dbb1245a0b2f71a199ba2ee6bf3ada4be38464ac80908a6d5017491696eebe",
-      "bytes": 293147
+      "loopStart": 128982,
+      "loopEnd": 226844,
+      "sha256": "79a858b6e18185cbf68f93af3cf84b17cdeb0fb89f58e4a49a19feb9e1b9db01",
+      "bytes": 283455
     },
     {
       "file": "zones/n70-v2-r1.flac",
@@ -241,10 +241,10 @@
       "hi": 84,
       "velLo": 1,
       "velHi": 62,
-      "loopStart": 134752,
-      "loopEnd": 235144,
-      "sha256": "9a62e36d885002a4095843181901ad9380f7f9687c27f4e1632da905e74ca7c5",
-      "bytes": 408724
+      "loopStart": 117602,
+      "loopEnd": 194680,
+      "sha256": "db0ef7331b21ef84a9dad1269befeb49637509949147ae040c5b5ed8c9d37892",
+      "bytes": 347073
     },
     {
       "file": "zones/n84-v2-r1.flac",
