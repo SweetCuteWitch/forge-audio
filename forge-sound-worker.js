@@ -1,4 +1,4 @@
-// source-hash: f7995e1001f5c8b32bba7479862f1db0ec22ac243299d5486abad59d084d7119
+// source-hash: 62b71b3288cdcc9318663ffa46f7e7980413fec47c068d4c585f61ea14df361a
 // src/sound/dsp.ts
 var dbToGain = (db) => 10 ** (db / 20);
 var gainToDb = (gain) => 20 * Math.log10(Math.max(gain, 1e-9));
@@ -839,7 +839,7 @@ var STUDIO_DRUM_TAIL = {
 };
 
 // src/web/protocol.ts
-var BUNDLE_VERSION = true ? "f7995e10 2026-10-20" : "dev";
+var BUNDLE_VERSION = true ? "62b71b32 2026-10-20" : "dev";
 var DEFAULT_SAMPLE_BASE_URL = "https://raw.githubusercontent.com/SweetCuteWitch/forge-audio/main/samples/";
 function synthList() {
   return Object.entries(INSTRUMENTS).filter(([id]) => id !== "sampler").map(([id, i]) => ({ id, low: i.low, high: i.high, role: i.role, description: i.description }));
@@ -1346,6 +1346,7 @@ function parseTune(input) {
   const channels = (Array.isArray(data.channels) ? data.channels : []).map((raw) => {
     const channel = raw;
     if (!channel.name) throw new ForgeFormatError("A channel without a name");
+    const shape = channel.shape !== void 0 ? parseShape(channel.shape, String(channel.name)) : void 0;
     return createChannel(String(channel.name), {
       voice: channel.voice ?? "pulse25",
       role: channel.role ?? "melody",
@@ -1361,7 +1362,7 @@ function parseTune(input) {
       ...channel.dynamics !== void 0 ? { dynamics: Number(channel.dynamics) } : {},
       ...channel.sample !== void 0 ? { sample: channel.sample } : {},
       ...channel.articulation !== void 0 ? { articulation: parseArticulation(channel.articulation, String(channel.name)) } : {},
-      ...channel.shape !== void 0 ? { shape: parseShape(channel.shape, String(channel.name)) } : {}
+      ...shape !== void 0 && Object.keys(shape).length > 0 ? { shape } : {}
     });
   });
   const sections = (Array.isArray(data.sections) ? data.sections : []).map((raw) => {
@@ -1831,9 +1832,25 @@ function loudnessLufs(channels, rate) {
 // src/sound/articulation.ts
 var SHAPE_FLOOR_DB = -30;
 var LEGATO_FADE_S = 0.03;
+var RING_CAP_S = 8;
+var SUSTAINING_SYNTHS = /* @__PURE__ */ new Set(["lead", "bass", "pad", "strings", "brass", "flute", "organ"]);
+function ringSustains(channel, manifest) {
+  if (channel.instrument && !isInstrument(channel.instrument)) {
+    if (!manifest || !manifest.sustain) return () => false;
+    return (note) => {
+      if (note.midi === null) return false;
+      const index = chooseZone(manifest, note.midi, layerVelocity(channel.dynamics, note.accent, 0), 0);
+      const z = index >= 0 ? manifest.zones[index] : void 0;
+      return z !== void 0 && z.loopStart !== void 0 && z.loopEnd !== void 0 && z.loopEnd > z.loopStart;
+    };
+  }
+  const id = channel.instrument;
+  if (id === "sampler") return () => channel.sample?.loop === true;
+  return () => id === void 0 || SUSTAINING_SYNTHS.has(id);
+}
 function channelUsesShape(channel, notes) {
   if (channel.articulation !== void 0 && channel.articulation !== "normal") return true;
-  if (channel.shape !== void 0) return true;
+  if (channel.shape !== void 0 && Object.keys(channel.shape).length > 0) return true;
   return notes.some((note) => /[<>~]/.test(note.holds));
 }
 function boundaryLevels(note) {
@@ -1867,12 +1884,14 @@ function buildCurve(note, length, stepSamples) {
   }
   return curve;
 }
-function planChannel(tune, channel, notes, rate) {
+function planChannel(tune, channel, notes, rate, manifest) {
   const stepSeconds2 = 60 / tune.tempo * (4 / stepDenominator(channel.step));
   const stepSamples = stepSeconds2 * rate;
   const articulation = channel.articulation ?? "normal";
   const totalSteps = tune.bars * stepsPerBar(tune, channel);
   const lanes = channelLanes(channel);
+  const sustains = articulation === "ring" ? ringSustains(channel, manifest) : () => false;
+  const capSamples = Math.round(RING_CAP_S * rate);
   const rests = lanes.map((row) => {
     const set = [];
     parseCells(row).forEach((cell, index) => {
@@ -1903,10 +1922,14 @@ function planChannel(tune, channel, notes, rate) {
     let endStep = noteEnd;
     if (ring) {
       const rest = rests[note.lane]?.find((r) => r >= noteEnd);
-      endStep = Math.max(endStep, rest ?? totalSteps);
+      let until = rest ?? totalSteps;
+      if (next !== null && sustains(note)) until = Math.min(until, next.stepIndex);
+      endStep = Math.max(endStep, until);
     }
     const start = Math.round(note.stepIndex * stepSamples);
-    const held = Math.max(1, Math.round(endStep * stepSamples) - start);
+    let endSample = Math.round(endStep * stepSamples);
+    if (ring) endSample = Math.min(endSample, Math.round(noteEnd * stepSamples) + capSamples);
+    const held = Math.max(1, endSample - start);
     const ownLength = Math.min(held, Math.max(1, Math.round(noteEnd * stepSamples) - start));
     return {
       note,
@@ -1979,8 +2002,7 @@ function studioLength(tune, options = {}) {
   return { body, total: body + Math.round(tailSeconds * rate) };
 }
 var LEGATO_SKIP_S = 0.08;
-var RING_CAP_S = 8;
-function voicesOf(plans, stepSamples, fadeN) {
+function voicesOf(plans, fadeN) {
   const voices = /* @__PURE__ */ new Map();
   for (let i = 0; i < plans.length; i++) {
     const first = plans[i];
@@ -1989,7 +2011,6 @@ function voicesOf(plans, stepSamples, fadeN) {
     const last = plans[j];
     const base = first.start;
     const held = last.start - base + last.held;
-    const own = Math.max(1, Math.round((last.note.stepIndex + last.note.steps) * stepSamples) - base);
     let curve = null;
     if (plans.slice(i, j + 1).some((p) => p.curve !== null)) {
       const lastLength = Math.max(last.curve ? last.curve.length : 1, j > i ? fadeN + 1 : 1);
@@ -2011,14 +2032,10 @@ function voicesOf(plans, stepSamples, fadeN) {
         }
       }
     }
-    voices.set(i, { first, last, held, own, curve });
+    voices.set(i, { first, last, held, curve });
     i = j;
   }
   return voices;
-}
-function zoneLoops(inst, zone) {
-  const z = inst.manifest.zones[zone];
-  return inst.manifest.sustain && z.loopStart !== void 0 && z.loopEnd !== void 0 && z.loopEnd > z.loopStart;
 }
 function skipOf(inst, zone) {
   const z = inst.manifest.zones[zone];
@@ -2070,9 +2087,9 @@ function crossfadeLayers(full, soft, curve, held, rate) {
 }
 function renderShapedNotes(ctx) {
   const { tune, channel, notes, rate, scratch, rng, humanize, instrument, sampled, sample } = ctx;
-  const plans = planChannel(tune, channel, notes, rate);
+  const plans = planChannel(tune, channel, notes, rate, sampled?.manifest);
   const fadeN = Math.max(1, Math.round(LEGATO_FADE_S * rate));
-  const voices = voicesOf(plans, stepSeconds(tune, channel) * rate, fadeN);
+  const voices = voicesOf(plans, fadeN);
   let rrIndex = 0;
   for (let pass = 0; pass < ctx.repeats; pass++) {
     const passOffset = pass * ctx.loopSeconds;
@@ -2126,16 +2143,13 @@ function renderShapedNotes(ctx) {
       const legatoIn = first.legatoIn;
       const legatoOut = last.legatoOut;
       const join = voice.held;
-      let holdLen = legatoOut ? join + fadeN : voice.held;
+      const holdLen = legatoOut ? join + fadeN : voice.held;
       const attackN = legatoIn ? 0 : Math.round(first.attackMs / 1e3 * rate);
       const releaseMs = last.releaseMs;
       let body;
       if (sampled) {
         const m = sampled.manifest;
         const zone = chooseZone(m, midi, hitVelocity, rrIndex);
-        if (last.ring && zone >= 0 && !zoneLoops(sampled, zone)) {
-          holdLen = Math.min(holdLen, voice.own + Math.round(RING_CAP_S * rate));
-        }
         const releaseSeconds = releaseMs === null ? void 0 : releaseMs / 1e3;
         const relN = Math.round((releaseSeconds ?? m.release) * rate) + 2;
         const length = Math.min(room, legatoOut ? join + fadeN : holdLen + relN);
@@ -2171,7 +2185,7 @@ function renderShapedNotes(ctx) {
         rrIndex++;
       } else {
         const skipN = legatoIn ? Math.round(LEGATO_SKIP_S * rate) : 0;
-        const releaseN = releaseMs === null || legatoOut ? 0 : Math.max(1, Math.round(releaseMs / 1e3 * rate));
+        const releaseN = releaseMs === null || legatoOut ? 0 : Math.max(1, Math.round(EDGE_FADE_S * rate), Math.round(releaseMs / 1e3 * rate));
         const job = {
           freq: midiToFreq(midi),
           samples: Math.max(1, holdLen + releaseN + skipN),
