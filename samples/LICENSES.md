@@ -5,7 +5,9 @@ Every instrument here is CC0, CC-BY or MIT. Using a CC-BY instrument in publishe
 
 | Id | Instrument | Source | Licence | Author | Attribution |
 | --- | --- | --- | --- | --- | --- |
+| `acoustic-kit` | Acoustic drum kit | https://freepats.zenvoid.org/Percussion/acoustic-drum-kit.html | [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/) | Lars Muldjord; FreePats version by roberto@zenvoid.org | MuldjordKit by Lars Muldjord (www.muldjord.com, www.drumgizmo.org), FreePats version by roberto@zenvoid.org, CC BY 4.0; thinned, resampled and normalised for the Forge sample library |
 | `clean-guitar` | Clean electric guitar | https://freepats.zenvoid.org/ElectricGuitar/clean-electric-guitar.html | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | FreePats project (FSBS Electric Guitar Clean #1) | — |
+| `electric-bass` | Electric bass | https://github.com/sfzinstruments/karoryfer.growlybass | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | Karoryfer Lecolds (D. Smolken) | — |
 | `nylon-guitar` | Nylon guitar | https://freepats.zenvoid.org/Guitar/acoustic-guitar.html | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | roberto@zenvoid.org (FreePats project) | — |
 | `overdrive-guitar` | Overdriven electric guitar | https://freepats.zenvoid.org/ElectricGuitar/distorted-electric-guitar.html | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | FreePats project (FSBS Electric Guitar Distorted #2) | — |
 | `steel-guitar` | Steel-string guitar | https://github.com/sfzinstruments/Discord-SFZ-GM-Bank | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | Jeff Learman, for the Discord SFZ GM Bank | — |
