@@ -1,4 +1,4 @@
-// source-hash: 62b71b3288cdcc9318663ffa46f7e7980413fec47c068d4c585f61ea14df361a
+// source-hash: ea9ace871d87b1044126b43c42373693f9fabbaf019a8b02430ca87138617809
 // src/sound/dsp.ts
 var dbToGain = (db) => 10 ** (db / 20);
 var gainToDb = (gain) => 20 * Math.log10(Math.max(gain, 1e-9));
@@ -275,6 +275,122 @@ function polyBlep(t, dt) {
     return x * x + x + x + 1;
   }
   return 0;
+}
+var DRIVE_OVERSAMPLE = 4;
+var DRIVE_TAPS = 129;
+var DRIVE_CORNER = 0.43;
+var DRIVE_KAISER = 8;
+var DRIVE_MAX_DB = 30;
+var DRIVE_BIAS = 0.3;
+var DRIVE_MATCH_MS = 250;
+function besselI0(x) {
+  let sum = 1;
+  let term = 1;
+  for (let k = 1; k < 50; k++) {
+    term *= (x / (2 * k)) ** 2;
+    sum += term;
+    if (term < sum * 1e-12) break;
+  }
+  return sum;
+}
+function kaiserLowpass(taps, corner, beta) {
+  const h = new Float64Array(taps);
+  const mid = (taps - 1) / 2;
+  const norm = besselI0(beta);
+  let sum = 0;
+  for (let i = 0; i < taps; i++) {
+    const t = i - mid;
+    const sinc = t === 0 ? 2 * corner : Math.sin(2 * Math.PI * corner * t) / (Math.PI * t);
+    const r = t / mid;
+    h[i] = sinc * (besselI0(beta * Math.sqrt(Math.max(0, 1 - r * r))) / norm);
+    sum += h[i];
+  }
+  for (let i = 0; i < taps; i++) h[i] /= sum;
+  return h;
+}
+var driveFir = null;
+function drive(input, sampleRate, options) {
+  const amount = Math.min(1, Math.max(0, options.amount));
+  const mix = Math.min(1, Math.max(0, options.mix ?? 1));
+  if (amount === 0 || mix === 0) return input.slice();
+  const L = DRIVE_OVERSAMPLE;
+  const N = DRIVE_TAPS;
+  const h = driveFir ??= kaiserLowpass(N, DRIVE_CORNER / L, DRIVE_KAISER);
+  const latency = (N - 1) / L;
+  const phaseTaps = Math.ceil(N / L);
+  const pre = dbToGain(DRIVE_MAX_DB * amount);
+  const bias = DRIVE_BIAS * amount;
+  const offset = Math.tanh(bias);
+  const n = input.length;
+  const total2 = n + latency;
+  const x = (i) => i >= 0 && i < n ? input[i] : 0;
+  const ring = new Float64Array(2 * N);
+  let pos = 0;
+  const wet = new Float32Array(n);
+  for (let k = 0; k < total2; k++) {
+    for (let p = 0; p < L; p++) {
+      let v = 0;
+      for (let q = 0; q < phaseTaps; q++) {
+        const j = p + q * L;
+        if (j >= N) break;
+        v += h[j] * x(k - q);
+      }
+      const w = Math.tanh(pre * L * v + bias) - offset;
+      ring[pos] = w;
+      ring[pos + N] = w;
+      if (p === 0 && k >= latency) {
+        let y = 0;
+        for (let j = 0; j < N; j++) y += h[j] * ring[pos + N - j];
+        wet[k - latency] = y;
+      }
+      pos = (pos + 1) % N;
+    }
+  }
+  const r = 1 - 2 * Math.PI * 10 / sampleRate;
+  const tone = new Biquad("lowpass", options.tone ?? 6e3, sampleRate);
+  const a = Math.exp(-1 / (DRIVE_MATCH_MS / 1e3 * sampleRate));
+  let x1 = 0;
+  let y1 = 0;
+  let eDry = 0;
+  let eWet = 0;
+  const out = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const blocked = wet[i] - x1 + r * y1;
+    x1 = wet[i];
+    y1 = blocked;
+    const w = tone.process(blocked);
+    eDry = a * eDry + (1 - a) * input[i] * input[i];
+    eWet = a * eWet + (1 - a) * w * w;
+    const gain = Math.sqrt((eDry + 1e-12) / (eWet + 1e-12));
+    out[i] = input[i] * (1 - mix) + w * gain * mix;
+  }
+  return out;
+}
+var DUCK_ATTACK_MS = 5;
+function duckEnvelope(length, sampleRate, hits, options) {
+  const g = new Float32Array(length).fill(1);
+  const depth = Math.min(1, Math.max(0, options.depth));
+  if (depth === 0) return g;
+  const floor = Math.max(1 - depth, 1e-3);
+  const floorDb = gainToDb(floor);
+  const A = Math.max(1, Math.round((options.attackMs ?? DUCK_ATTACK_MS) / 1e3 * sampleRate));
+  const R = Math.max(1, Math.round(Math.max(0, options.releaseMs) / 1e3 * sampleRate));
+  for (const hit of hits) {
+    const from = Math.max(0, hit - A);
+    const to = Math.min(length - 1, hit + R);
+    for (let i = from; i <= to; i++) {
+      let v;
+      if (i < hit) {
+        const u = (i - (hit - A)) / A;
+        v = 1 - (1 - floor) * (0.5 - 0.5 * Math.cos(Math.PI * u));
+      } else {
+        const u = (i - hit) / R;
+        v = dbToGain(floorDb * (1 - u * u * (3 - 2 * u)));
+      }
+      if (v < g[i]) g[i] = v;
+    }
+  }
+  return g;
 }
 
 // src/core/types.ts
@@ -839,7 +955,7 @@ var STUDIO_DRUM_TAIL = {
 };
 
 // src/web/protocol.ts
-var BUNDLE_VERSION = true ? "62b71b32 2026-10-20" : "dev";
+var BUNDLE_VERSION = true ? "ea9ace87 2026-10-20" : "dev";
 var DEFAULT_SAMPLE_BASE_URL = "https://raw.githubusercontent.com/SweetCuteWitch/forge-audio/main/samples/";
 function synthList() {
   return Object.entries(INSTRUMENTS).filter(([id]) => id !== "sampler").map(([id, i]) => ({ id, low: i.low, high: i.high, role: i.role, description: i.description }));
@@ -1201,6 +1317,8 @@ var DRUM_LETTERS = {
   tom: "t",
   ride: "r"
 };
+var DRIVE_TONE_RANGE = { low: 200, high: 2e4 };
+var DUCK_RELEASE_MAX = 1e4;
 var ARTICULATIONS = ["normal", "ring", "legato"];
 var DEFAULT_ENVELOPE = { attack: 0, decay: 60, sustain: 0.7, release: 90 };
 function createChannel(name, options = {}) {
@@ -1335,6 +1453,33 @@ function parseShape(value, name) {
   }
   return shape;
 }
+var isNumberIn = (value, low, high) => typeof value === "number" && Number.isFinite(value) && value >= low && value <= high;
+function checkDriveDuck(channel, channels) {
+  const fx = channel.fx;
+  if (!fx || typeof fx !== "object") return;
+  const where = `Channel ${channel.name}`;
+  if (fx.drive !== void 0) {
+    const d = fx.drive;
+    if (!d || typeof d !== "object" || Array.isArray(d)) throw new ForgeFormatError(`${where}: fx.drive must be an object like { amount, tone, mix }`);
+    if (!isNumberIn(d.amount, 0, 1)) throw new ForgeFormatError(`${where}: fx.drive.amount must be 0 \u2026 1, got ${String(d.amount)}`);
+    if (d.tone !== void 0 && !isNumberIn(d.tone, DRIVE_TONE_RANGE.low, DRIVE_TONE_RANGE.high)) {
+      throw new ForgeFormatError(`${where}: fx.drive.tone must be ${DRIVE_TONE_RANGE.low} \u2026 ${DRIVE_TONE_RANGE.high} Hz, got ${String(d.tone)}`);
+    }
+    if (d.mix !== void 0 && !isNumberIn(d.mix, 0, 1)) throw new ForgeFormatError(`${where}: fx.drive.mix must be 0 \u2026 1, got ${String(d.mix)}`);
+  }
+  if (fx.duck !== void 0) {
+    const d = fx.duck;
+    if (!d || typeof d !== "object" || Array.isArray(d)) throw new ForgeFormatError(`${where}: fx.duck must be an object like { channel, drums, depth, release }`);
+    const source = channels.find((c) => c.name === d.channel);
+    if (!source) throw new ForgeFormatError(`${where}: fx.duck.channel "${String(d.channel)}" is not a channel of the track`);
+    if (source.role !== "drums") throw new ForgeFormatError(`${where}: fx.duck.channel "${source.name}" must be a drum channel (role "drums")`);
+    if (d.drums !== void 0 && (typeof d.drums !== "string" || d.drums === "" || [...d.drums].some((l) => !(l in DRUM_SYMBOLS)))) {
+      throw new ForgeFormatError(`${where}: fx.duck.drums must be drum letters (${Object.keys(DRUM_SYMBOLS).join("")}), got ${String(d.drums)}`);
+    }
+    if (!isNumberIn(d.depth, 0, 1)) throw new ForgeFormatError(`${where}: fx.duck.depth must be 0 \u2026 1, got ${String(d.depth)}`);
+    if (!isNumberIn(d.release, 0, DUCK_RELEASE_MAX)) throw new ForgeFormatError(`${where}: fx.duck.release must be 0 \u2026 ${DUCK_RELEASE_MAX} ms, got ${String(d.release)}`);
+  }
+}
 function parseTune(input) {
   const data = typeof input === "string" ? JSON.parse(input) : input;
   if (!data || typeof data !== "object") throw new ForgeFormatError("Empty track document");
@@ -1365,6 +1510,7 @@ function parseTune(input) {
       ...shape !== void 0 && Object.keys(shape).length > 0 ? { shape } : {}
     });
   });
+  for (const channel of channels) checkDriveDuck(channel, channels);
   const sections = (Array.isArray(data.sections) ? data.sections : []).map((raw) => {
     const section = raw;
     return {
@@ -1966,10 +2112,26 @@ function stepSeconds(tune, channel) {
   return 60 / tune.tempo * (4 / stepDenominator(channel.step));
 }
 var ACCENT_GAIN = 1.25;
+function duckHits(tune, channel, repeats, rate) {
+  const duck = channel.fx?.duck;
+  if (!duck) return [];
+  const source = tune.channels.find((c) => c.name === duck.channel);
+  if (!source || source.role !== "drums") return [];
+  const kinds = new Set([...duck.drums ?? "k"].map((letter) => DRUM_SYMBOLS[letter]));
+  const step = stepSeconds(tune, source);
+  const loop = tuneSeconds(tune);
+  const steps = [...new Set(channelNotes(tune, source).filter((n) => n.drum !== null && kinds.has(n.drum)).map((n) => n.stepIndex))];
+  const hits = [];
+  for (let pass = 0; pass < Math.max(1, repeats); pass++) {
+    for (const s of steps) hits.push(Math.round((pass * loop + s * step) * rate));
+  }
+  return [...new Set(hits)].sort((a, b) => a - b);
+}
 function applyChannelFx(mono, fx, tune, rate) {
   let signal = mono;
   const eq = fx?.eq;
   if (eq?.hp) filterInPlace(signal, new Biquad("highpass", eq.hp, rate));
+  if (fx?.drive && fx.drive.amount > 0 && (fx.drive.mix ?? 1) > 0) signal = drive(signal, rate, fx.drive);
   if (eq?.lp) filterInPlace(signal, new Biquad("lowpass", eq.lp, rate));
   if (eq?.low) filterInPlace(signal, new Biquad("lowshelf", 120, rate, 0.7071, eq.low));
   if (eq?.mid) filterInPlace(signal, new Biquad("peak", 1e3, rate, 0.9, eq.mid));
@@ -2285,6 +2447,12 @@ function renderChannel(tune, channel, options = {}) {
     }
   }
   const { left, right } = applyChannelFx(scratch, channel.fx, tune, rate);
+  const duck = channel.fx?.duck;
+  if (duck && duck.depth > 0) {
+    const gain = duckEnvelope(total2, rate, duckHits(tune, channel, repeats, rate), { depth: duck.depth, releaseMs: duck.release });
+    for (let i = 0; i < total2; i++) left[i] *= gain[i];
+    if (right !== left) for (let i = 0; i < total2; i++) right[i] *= gain[i];
+  }
   const pan = Math.max(-1, Math.min(1, channel.pan));
   const angle = (pan + 1) * Math.PI / 4;
   const gl = Math.cos(angle) * Math.SQRT2;
@@ -2367,7 +2535,10 @@ var samplerWarning = (c) => `channel "${c.name}": a sampler plays a WAV from dis
 var unknownInstrument = (c) => `channel "${c.name}": unknown instrument "${c.instrument}"`;
 function channelKey(tune, channel) {
   const { name, tempo, meter, key, scale, bars, loop } = tune;
-  return JSON.stringify({ channel, track: { name, tempo, meter, key, scale, bars, loop } });
+  const duck = channel.fx?.duck;
+  const source = duck ? tune.channels.find((c) => c.name === duck.channel) : void 0;
+  const duckSource = source ? { role: source.role, step: source.step, steps: source.steps } : null;
+  return JSON.stringify({ channel, track: { name, tempo, meter, key, scale, bars, loop }, ...duck ? { duckSource } : {} });
 }
 var isSampler = (c) => instrumentOf(c) === "sampler";
 var sampledId = (c) => c.instrument && !isInstrument(c.instrument) ? c.instrument : void 0;
