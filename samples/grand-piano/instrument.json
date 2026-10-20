@@ -1,0 +1,1822 @@
+{
+  "format": "forge/instrument@1",
+  "id": "grand-piano",
+  "name": "Grand piano",
+  "category": "keys",
+  "description": "a Yamaha C5 concert grand (Salamander), in stereo",
+  "role": "harmony",
+  "low": 21,
+  "high": 108,
+  "gm": 0,
+  "release": 0.6,
+  "sustain": false,
+  "licence": {
+    "name": "CC-BY-3.0",
+    "url": "https://creativecommons.org/licenses/by/3.0/",
+    "author": "Alexander Holm; FreePats SFZ+FLAC version by roberto@zenvoid.org",
+    "source": "https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html",
+    "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC BY 3.0 (https://archive.org/details/SalamanderGrandPianoV3), FreePats SFZ+FLAC version; thinned to six velocity layers, resampled, trimmed and normalised for the Forge sample library"
+  },
+  "zones": [
+    {
+      "file": "zones/n21-v1-r1.flac",
+      "root": 21,
+      "lo": 21,
+      "hi": 22,
+      "velLo": 1,
+      "velHi": 43,
+      "sha256": "73ab0a30f960df243758dcddfb99bf40fc07fa3971a8fb50131bd2fc8ae7a446",
+      "bytes": 202515
+    },
+    {
+      "file": "zones/n21-v2-r1.flac",
+      "root": 21,
+      "lo": 21,
+      "hi": 22,
+      "velLo": 44,
+      "velHi": 56,
+      "sha256": "9fe7cdb0b0b697384ee8a00ff5d595d85c0527bec42bd3e56c34a445a7e6bc36",
+      "bytes": 227827
+    },
+    {
+      "file": "zones/n21-v3-r1.flac",
+      "root": 21,
+      "lo": 21,
+      "hi": 22,
+      "velLo": 57,
+      "velHi": 80,
+      "sha256": "64b493dac392b465afba272ffb4e4f54a3ac509b07f4fe0d07413ce0181958ca",
+      "bytes": 245928
+    },
+    {
+      "file": "zones/n21-v4-r1.flac",
+      "root": 21,
+      "lo": 21,
+      "hi": 22,
+      "velLo": 81,
+      "velHi": 96,
+      "sha256": "edcda8eea6bb78a0b1748387a0f1eb1805c33514bf17b951fc5a8116fb8ffa65",
+      "bytes": 258380
+    },
+    {
+      "file": "zones/n21-v5-r1.flac",
+      "root": 21,
+      "lo": 21,
+      "hi": 22,
+      "velLo": 97,
+      "velHi": 120,
+      "sha256": "2dfbb6d25a4b6937d09241d9dfa36dda938748976ac5ffe14b720c09800d5b27",
+      "bytes": 266790
+    },
+    {
+      "file": "zones/n21-v6-r1.flac",
+      "root": 21,
+      "lo": 21,
+      "hi": 22,
+      "velLo": 121,
+      "velHi": 127,
+      "sha256": "2be6a27dd473547e06f39206e1f019d5d747c84c97d77607d9d5359a5c7505c3",
+      "bytes": 283769
+    },
+    {
+      "file": "zones/n24-v1-r1.flac",
+      "root": 24,
+      "lo": 23,
+      "hi": 25,
+      "velLo": 1,
+      "velHi": 43,
+      "sha256": "e43309b9e61a0ba99f3762ef8014a3951623f88d7fd54a0e999c3fe09c90f5f8",
+      "bytes": 223111
+    },
+    {
+      "file": "zones/n24-v2-r1.flac",
+      "root": 24,
+      "lo": 23,
+      "hi": 25,
+      "velLo": 44,
+      "velHi": 56,
+      "sha256": "29337c63714a620ad1c1d3b56b086daa79279d79bc9d0e31a4d971b1adb44c5a",
+      "bytes": 243384
+    },
+    {
+      "file": "zones/n24-v3-r1.flac",
+      "root": 24,
+      "lo": 23,
+      "hi": 25,
+      "velLo": 57,
+      "velHi": 80,
+      "sha256": "e70d445a625954d67b289931abd73ef9083b78d0079f032ae635072e4d3333e8",
+      "bytes": 252352
+    },
+    {
+      "file": "zones/n24-v4-r1.flac",
+      "root": 24,
+      "lo": 23,
+      "hi": 25,
+      "velLo": 81,
+      "velHi": 96,
+      "sha256": "c3e88b6d08aed015a2f5bbdc9da885f684b8fe0c94c1c1a80f2d427a518fd9af",
+      "bytes": 261537
+    },
+    {
+      "file": "zones/n24-v5-r1.flac",
+      "root": 24,
+      "lo": 23,
+      "hi": 25,
+      "velLo": 97,
+      "velHi": 120,
+      "sha256": "0e82a3591b45799d940f336a76ab11f4d73b219c8d306307dd8eedd6348859ed",
+      "bytes": 270373
+    },
+    {
+      "file": "zones/n24-v6-r1.flac",
+      "root": 24,
+      "lo": 23,
+      "hi": 25,
+      "velLo": 121,
+      "velHi": 127,
+      "sha256": "3d16dec1bd3b7c3baaef7d9bb0e2f0375d3c5faa207cfe7064251dbd0df45c25",
+      "bytes": 286337
+    },
+    {
+      "file": "zones/n27-v1-r1.flac",
+      "root": 27,
+      "lo": 26,
+      "hi": 28,
+      "velLo": 1,
+      "velHi": 43,
+      "sha256": "29dc9fd243f61f5759051450cba328dbe0529ddb5ec856f278dc590c446fe52e",
+      "bytes": 238618
+    },
+    {
+      "file": "zones/n27-v2-r1.flac",
+      "root": 27,
+      "lo": 26,
+      "hi": 28,
+      "velLo": 44,
+      "velHi": 56,
+      "sha256": "b077e0394ded8450af22ca9bee4f16b8704a52c37231450a3d0dfd873bf5c5e3",
+      "bytes": 261363
+    },
+    {
+      "file": "zones/n27-v3-r1.flac",
+      "root": 27,
+      "lo": 26,
+      "hi": 28,
+      "velLo": 57,
+      "velHi": 80,
+      "sha256": "176ad2c6a2080ca3a8bf03ef22e007b340f4ed5b6000f09a13655a484046fa6b",
+      "bytes": 277001
+    },
+    {
+      "file": "zones/n27-v4-r1.flac",
+      "root": 27,
+      "lo": 26,
+      "hi": 28,
+      "velLo": 81,
+      "velHi": 96,
+      "sha256": "646db41e7c8b84995477214c16c087dfeffc6fdde07edbd4652642b0f88f28f2",
+      "bytes": 287520
+    },
+    {
+      "file": "zones/n27-v5-r1.flac",
+      "root": 27,
+      "lo": 26,
+      "hi": 28,
+      "velLo": 97,
+      "velHi": 120,
+      "sha256": "d9d8488b17941cca435255a69517336960fd073ac8e72960bf85dcf2960d6fd2",
+      "bytes": 299510
+    },
+    {
+      "file": "zones/n27-v6-r1.flac",
+      "root": 27,
+      "lo": 26,
+      "hi": 28,
+      "velLo": 121,
+      "velHi": 127,
+      "sha256": "7eaff9e41b710b75dd6f63cce9e32f2d24c7ee050990fbce364d0de9e935834e",
+      "bytes": 323786
+    },
+    {
+      "file": "zones/n30-v1-r1.flac",
+      "root": 30,
+      "lo": 29,
+      "hi": 31,
+      "velLo": 1,
+      "velHi": 43,
+      "sha256": "a627dad3b81ed5f44ea1cca5373513e68bc7a97c67dbfb2100efbb1f22451627",
+      "bytes": 211709
+    },
+    {
+      "file": "zones/n30-v2-r1.flac",
+      "root": 30,
+      "lo": 29,
+      "hi": 31,
+      "velLo": 44,
+      "velHi": 56,
+      "sha256": "c51edb8f34370e357c2cb3529b18ed7a45b23794d43d034b9dce4b285d2edc63",
+      "bytes": 259641
+    },
+    {
+      "file": "zones/n30-v3-r1.flac",
+      "root": 30,
+      "lo": 29,
+      "hi": 31,
+      "velLo": 57,
+      "velHi": 80,
+      "sha256": "99a002d4dcc2de5ba0b3503e9afd5ac84d2b48ef2df011b702d82d94dd876cf0",
+      "bytes": 274826
+    },
+    {
+      "file": "zones/n30-v4-r1.flac",
+      "root": 30,
+      "lo": 29,
+      "hi": 31,
+      "velLo": 81,
+      "velHi": 96,
+      "sha256": "a5363cc7ed2c380f018cd693268ed0f2851581d45b9d4733a1a8378ce6ed3916",
+      "bytes": 279988
+    },
+    {
+      "file": "zones/n30-v5-r1.flac",
+      "root": 30,
+      "lo": 29,
+      "hi": 31,
+      "velLo": 97,
+      "velHi": 120,
+      "sha256": "183b214df1eeaf93718b3d17177b5bbb874153c9ddf396696643a0503b5dabef",
+      "bytes": 290197
+    },
+    {
+      "file": "zones/n30-v6-r1.flac",
+      "root": 30,
+      "lo": 29,
+      "hi": 31,
+      "velLo": 121,
+      "velHi": 127,
+      "sha256": "b62d4fa41a43d68231c4eb739a42f63bc900c26ee0847554b58d491d26be2362",
+      "bytes": 311658
+    },
+    {
+      "file": "zones/n33-v1-r1.flac",
+      "root": 33,
+      "lo": 32,
+      "hi": 34,
+      "velLo": 1,
+      "velHi": 43,
+      "sha256": "7fe0899f35551a71c010380f86f9083bf916cf2a7739d0c5b6b140a818683747",
+      "bytes": 200446
+    },
+    {
+      "file": "zones/n33-v2-r1.flac",
+      "root": 33,
+      "lo": 32,
+      "hi": 34,
+      "velLo": 44,
+      "velHi": 56,
+      "sha256": "bd976e30f4a85833259e770e66fd008bea9d3e5695248388c5b375b42f827fad",
+      "bytes": 244296
+    },
+    {
+      "file": "zones/n33-v3-r1.flac",
+      "root": 33,
+      "lo": 32,
+      "hi": 34,
+      "velLo": 57,
+      "velHi": 80,
+      "sha256": "5717a6d68381237412d2304f6288f299d98fa0ca5c1e80dd4bff91f92f53133b",
+      "bytes": 263515
+    },
+    {
+      "file": "zones/n33-v4-r1.flac",
+      "root": 33,
+      "lo": 32,
+      "hi": 34,
+      "velLo": 81,
+      "velHi": 96,
+      "sha256": "3ea25c2a55d8fb4fa25657ca03feeefd84df4d0d6274a0f66885ba0de32be3d9",
+      "bytes": 279364
+    },
+    {
+      "file": "zones/n33-v5-r1.flac",
+      "root": 33,
+      "lo": 32,
+      "hi": 34,
+      "velLo": 97,
+      "velHi": 120,
+      "sha256": "9ea0e4f5a9c5353394eb91f17c1be5f2513bf680bec057b562f16d583e8efcff",
+      "bytes": 302004
+    },
+    {
+      "file": "zones/n33-v6-r1.flac",
+      "root": 33,
+      "lo": 32,
+      "hi": 34,
+      "velLo": 121,
+      "velHi": 127,
+      "sha256": "22b60cfa49c34076f7c1e1951870b4504a95afba686f5971eb998233b645d96d",
+      "bytes": 350353
+    },
+    {
+      "file": "zones/n36-v1-r1.flac",
+      "root": 36,
+      "lo": 35,
+      "hi": 37,
+      "velLo": 1,
+      "velHi": 43,
+      "sha256": "737d9ef049c1ea254aec8c5764606d2b0e16d00f1323c33ad9ae55525ca64134",
+      "bytes": 203027
+    },
+    {
+      "file": "zones/n36-v2-r1.flac",
+      "root": 36,
+      "lo": 35,
+      "hi": 37,
+      "velLo": 44,
+      "velHi": 56,
+      "sha256": "3b5d19223055e6ba24012e7559dfb3ad371ffc91f7c31c7733b4ddd608677677",
+      "bytes": 248029
+    },
+    {
+      "file": "zones/n36-v3-r1.flac",
+      "root": 36,
+      "lo": 35,
+      "hi": 37,
+      "velLo": 57,
+      "velHi": 80,
+      "sha256": "7628866bd84efdced82cfda586943fcebd9fcefbbb6d80e7738a7378bdb246bb",
+      "bytes": 270811
+    },
+    {
+      "file": "zones/n36-v4-r1.flac",
+      "root": 36,
+      "lo": 35,
+      "hi": 37,
+      "velLo": 81,
+      "velHi": 96,
+      "sha256": "a90a16ee7d2e7c74da135f6fa72389d0c50bfd646516eda7c0645eac400ece51",
+      "bytes": 289939
+    },
+    {
+      "file": "zones/n36-v5-r1.flac",
+      "root": 36,
+      "lo": 35,
+      "hi": 37,
+      "velLo": 97,
+      "velHi": 120,
+      "sha256": "e990cc9ef0160df4f923b0f20e09a03622a8a7c817ce7471075eb38f2ea8f9f7",
+      "bytes": 306998
+    },
+    {
+      "file": "zones/n36-v6-r1.flac",
+      "root": 36,
+      "lo": 35,
+      "hi": 37,
+      "velLo": 121,
+      "velHi": 127,
+      "sha256": "78c627dbea16c56fdc9b60d3256205107f03af38c7a4939c3d99f6e2801ef167",
+      "bytes": 344339
+    },
+    {
+      "file": "zones/n39-v1-r1.flac",
+      "root": 39,
+      "lo": 38,
+      "hi": 40,
+      "velLo": 1,
+      "velHi": 43,
+      "sha256": "a45be83137004a25922b3186104698a090536b8e085cb1247e6729012e3a5c4a",
+      "bytes": 218500
+    },
+    {
+      "file": "zones/n39-v2-r1.flac",
+      "root": 39,
+      "lo": 38,
+      "hi": 40,
+      "velLo": 44,
+      "velHi": 56,
+      "sha256": "877ec176fab3ba8afcd433af10c739e5a677eb4c2556deb954b45cb637e488ba",
+      "bytes": 262463
+    },
+    {
+      "file": "zones/n39-v3-r1.flac",
+      "root": 39,
+      "lo": 38,
+      "hi": 40,
+      "velLo": 57,
+      "velHi": 80,
+      "sha256": "4cfa84c1b1e7e8b9e20b33b3807fd7ff67a6c72a5f28fd45359631c5c71e3688",
+      "bytes": 271186
+    },
+    {
+      "file": "zones/n39-v4-r1.flac",
+      "root": 39,
+      "lo": 38,
+      "hi": 40,
+      "velLo": 81,
+      "velHi": 96,
+      "sha256": "30f6e1d643e44c49346c601947ad8ebf5de0d77677c025dc7a9826afad2a76b1",
+      "bytes": 278333
+    },
+    {
+      "file": "zones/n39-v5-r1.flac",
+      "root": 39,
+      "lo": 38,
+      "hi": 40,
+      "velLo": 97,
+      "velHi": 120,
+      "sha256": "c2a71186da92b91942a5ebc7bcf18530dffd8e88c79393c4ccb7abfa6ff43cd9",
+      "bytes": 294484
+    },
+    {
+      "file": "zones/n39-v6-r1.flac",
+      "root": 39,
+      "lo": 38,
+      "hi": 40,
+      "velLo": 121,
+      "velHi": 127,
+      "sha256": "ac8f3b19178f85be584452a99fe776d9ba022ca9e8c0a1c96ae8c308114ecb07",
+      "bytes": 329648
+    },
+    {
+      "file": "zones/n42-v1-r1.flac",
+      "root": 42,
+      "lo": 41,
+      "hi": 43,
+      "velLo": 1,
+      "velHi": 43,
+      "sha256": "39522c1ea5b606fc4abb48ba4264404b57e95753117f08486900c6b9371c7fa8",
+      "bytes": 200221
+    },
+    {
+      "file": "zones/n42-v2-r1.flac",
+      "root": 42,
+      "lo": 41,
+      "hi": 43,
+      "velLo": 44,
+      "velHi": 56,
+      "sha256": "0860dbcbd43c477ccc87977af05c7f47a6e794b840358bdac21a9b9855c7bee4",
+      "bytes": 245312
+    },
+    {
+      "file": "zones/n42-v3-r1.flac",
+      "root": 42,
+      "lo": 41,
+      "hi": 43,
+      "velLo": 57,
+      "velHi": 80,
+      "sha256": "2320616e88935ef6c8a865bb97dea104726c3a8100d2332e210b012f78ade849",
+      "bytes": 265326
+    },
+    {
+      "file": "zones/n42-v4-r1.flac",
+      "root": 42,
+      "lo": 41,
+      "hi": 43,
+      "velLo": 81,
+      "velHi": 96,
+      "sha256": "ed59f0ce2ebfb4a60388f2bda21ec5212418bc50d25c205c71bfada7f28f68b2",
+      "bytes": 279687
+    },
+    {
+      "file": "zones/n42-v5-r1.flac",
+      "root": 42,
+      "lo": 41,
+      "hi": 43,
+      "velLo": 97,
+      "velHi": 120,
+      "sha256": "d0a92d0355efddeefd96ffb83cae1cd61dccca2f1daa9c0b50ff9111e3e21674",
+      "bytes": 294540
+    },
+    {
+      "file": "zones/n42-v6-r1.flac",
+      "root": 42,
+      "lo": 41,
+      "hi": 43,
+      "velLo": 121,
+      "velHi": 127,
+      "sha256": "671dc10750f8f172a007a8e46248c6b0680decf987141cc60f25a71726ff529e",
+      "bytes": 332745
+    },
+    {
+      "file": "zones/n45-v1-r1.flac",
+      "root": 45,
+      "lo": 44,
+      "hi": 46,
+      "velLo": 1,
+      "velHi": 43,
+      "sha256": "55670606b19bbf5714ef04035ea7c631243a051077ab67164c13c7183a320148",
+      "bytes": 212677
+    },
+    {
+      "file": "zones/n45-v2-r1.flac",
+      "root": 45,
+      "lo": 44,
+      "hi": 46,
+      "velLo": 44,
+      "velHi": 56,
+      "sha256": "6da3edf1ec778dc5eb0fbd70edc8ab590cb68cc4e5ed2fd79e51d5921b51a4dd",
+      "bytes": 242778
+    },
+    {
+      "file": "zones/n45-v3-r1.flac",
+      "root": 45,
+      "lo": 44,
+      "hi": 46,
+      "velLo": 57,
+      "velHi": 80,
+      "sha256": "6c5cfd1616c578d875d01de3bbc4aca42cd99d14742a0091896b544186bff418",
+      "bytes": 257415
+    },
+    {
+      "file": "zones/n45-v4-r1.flac",
+      "root": 45,
+      "lo": 44,
+      "hi": 46,
+      "velLo": 81,
+      "velHi": 96,
+      "sha256": "6ca6b5eca4871c3e0cd61972310ed3a214e4a5552122bdd227899874ce37ec4f",
+      "bytes": 276339
+    },
+    {
+      "file": "zones/n45-v5-r1.flac",
+      "root": 45,
+      "lo": 44,
+      "hi": 46,
+      "velLo": 97,
+      "velHi": 120,
+      "sha256": "74c4621e54d973076a3c1599a21227063ab0daf14ffd89d0801e4fa064da83fa",
+      "bytes": 303855
+    },
+    {
+      "file": "zones/n45-v6-r1.flac",
+      "root": 45,
+      "lo": 44,
+      "hi": 46,
+      "velLo": 121,
+      "velHi": 127,
+      "sha256": "3a4cafcf817d9c0256d59f5b2cec5f6d698531d018300e998c1cb6611392cc25",
+      "bytes": 344322
+    },
+    {
+      "file": "zones/n48-v1-r1.flac",
+      "root": 48,
+      "lo": 47,
+      "hi": 49,
+      "velLo": 1,
+      "velHi": 43,
+      "sha256": "066bea22844e1d27cdca2cf6b375f53a2ac41cd6eca3a9b3031b33ff67187649",
+      "bytes": 182806
+    },
+    {
+      "file": "zones/n48-v2-r1.flac",
+      "root": 48,
+      "lo": 47,
+      "hi": 49,
+      "velLo": 44,
+      "velHi": 56,
+      "sha256": "4257f853d4dc215dd5a3091d24f7f7f6b4a00fe1354b16aef54840e53a35828d",
+      "bytes": 209502
+    },
+    {
+      "file": "zones/n48-v3-r1.flac",
+      "root": 48,
+      "lo": 47,
+      "hi": 49,
+      "velLo": 57,
+      "velHi": 80,
+      "sha256": "99933440f8e7e866d4f2318cd99a889eb1778df508984a436acb13cba9142eb2",
+      "bytes": 230750
+    },
+    {
+      "file": "zones/n48-v4-r1.flac",
+      "root": 48,
+      "lo": 47,
+      "hi": 49,
+      "velLo": 81,
+      "velHi": 96,
+      "sha256": "7483c0d76683d6618433bd53894fb5d7a980182b350bef31bdcae95d5d23ee31",
+      "bytes": 243068
+    },
+    {
+      "file": "zones/n48-v5-r1.flac",
+      "root": 48,
+      "lo": 47,
+      "hi": 49,
+      "velLo": 97,
+      "velHi": 120,
+      "sha256": "6ba37e4c681ac139e28441401f0fd4de86484e82d4f5f7ac334e52831b9613c1",
+      "bytes": 257873
+    },
+    {
+      "file": "zones/n48-v6-r1.flac",
+      "root": 48,
+      "lo": 47,
+      "hi": 49,
+      "velLo": 121,
+      "velHi": 127,
+      "sha256": "5874734a8b54978114ee47285673d2452ecec292fc271c59f843b88f7bc8107b",
+      "bytes": 298179
+    },
+    {
+      "file": "zones/n51-v1-r1.flac",
+      "root": 51,
+      "lo": 50,
+      "hi": 52,
+      "velLo": 1,
+      "velHi": 43,
+      "sha256": "d7413a22147b19f1104c3ea2400b50ecf31a212a20c32dc2871e0783c06cd08f",
+      "bytes": 193248
+    },
+    {
+      "file": "zones/n51-v2-r1.flac",
+      "root": 51,
+      "lo": 50,
+      "hi": 52,
+      "velLo": 44,
+      "velHi": 56,
+      "sha256": "d2f15daed78bd378156a3a5e2a77062efe78e7818a5dd1ff745053c692016c5e",
+      "bytes": 225673
+    },
+    {
+      "file": "zones/n51-v3-r1.flac",
+      "root": 51,
+      "lo": 50,
+      "hi": 52,
+      "velLo": 57,
+      "velHi": 80,
+      "sha256": "23b13562a04859e2b7d286ad202a3af4d201ed7d5278a9617c71b913297a797b",
+      "bytes": 234293
+    },
+    {
+      "file": "zones/n51-v4-r1.flac",
+      "root": 51,
+      "lo": 50,
+      "hi": 52,
+      "velLo": 81,
+      "velHi": 96,
+      "sha256": "dda5cd234b012b170455dbd5d19a66003c8dcdbd9802b46442fcf8e48cf1aad6",
+      "bytes": 248786
+    },
+    {
+      "file": "zones/n51-v5-r1.flac",
+      "root": 51,
+      "lo": 50,
+      "hi": 52,
+      "velLo": 97,
+      "velHi": 120,
+      "sha256": "027e8ed6577ca445794a687160ad5bf3209a1703a3324e4b2a8e7e097bfc5d9f",
+      "bytes": 268267
+    },
+    {
+      "file": "zones/n51-v6-r1.flac",
+      "root": 51,
+      "lo": 50,
+      "hi": 52,
+      "velLo": 121,
+      "velHi": 127,
+      "sha256": "0cd9310e87d967b1d6ead7944c4508bc0d4991ff107e184e8147b2e236a4a6ef",
+      "bytes": 302705
+    },
+    {
+      "file": "zones/n54-v1-r1.flac",
+      "root": 54,
+      "lo": 53,
+      "hi": 55,
+      "velLo": 1,
+      "velHi": 43,
+      "sha256": "362294ad76fd7cf2353d92ecafa4fcdcb8f33b330253f0d3222148e51182169d",
+      "bytes": 194013
+    },
+    {
+      "file": "zones/n54-v2-r1.flac",
+      "root": 54,
+      "lo": 53,
+      "hi": 55,
+      "velLo": 44,
+      "velHi": 56,
+      "sha256": "8ac050f9f73c41a11edeeb1f95aacf498639ca21ad951d67570fd9bf41e6420f",
+      "bytes": 210292
+    },
+    {
+      "file": "zones/n54-v3-r1.flac",
+      "root": 54,
+      "lo": 53,
+      "hi": 55,
+      "velLo": 57,
+      "velHi": 80,
+      "sha256": "0bdeb8daab9b894fed245302cf2689fc383e24df883a96e5a33b74d32e11b79a",
+      "bytes": 231301
+    },
+    {
+      "file": "zones/n54-v4-r1.flac",
+      "root": 54,
+      "lo": 53,
+      "hi": 55,
+      "velLo": 81,
+      "velHi": 96,
+      "sha256": "58c67d2727b182ae4b45f0338170c1d5b9d438c98a1246fff6a058dcc57d5fe1",
+      "bytes": 247239
+    },
+    {
+      "file": "zones/n54-v5-r1.flac",
+      "root": 54,
+      "lo": 53,
+      "hi": 55,
+      "velLo": 97,
+      "velHi": 120,
+      "sha256": "f31c104234bc44a1a9f0e4748d143a53c563d2633cbc868eda98d9ff29fbab74",
+      "bytes": 260916
+    },
+    {
+      "file": "zones/n54-v6-r1.flac",
+      "root": 54,
+      "lo": 53,
+      "hi": 55,
+      "velLo": 121,
+      "velHi": 127,
+      "sha256": "70ede6dd9ba14f72db7df51f2cbb538280acc49667e84545fabfd69c8754ca8a",
+      "bytes": 304762
+    },
+    {
+      "file": "zones/n57-v1-r1.flac",
+      "root": 57,
+      "lo": 56,
+      "hi": 58,
+      "velLo": 1,
+      "velHi": 43,
+      "sha256": "d91ad5cabc1d303922aef2e61d79173a0867bf44a7e501a7a712711926a15654",
+      "bytes": 192391
+    },
+    {
+      "file": "zones/n57-v2-r1.flac",
+      "root": 57,
+      "lo": 56,
+      "hi": 58,
+      "velLo": 44,
+      "velHi": 56,
+      "sha256": "d5973d051f577f039121f355ff623fa86d831a0debc150ca8586fb887a45d9b5",
+      "bytes": 213415
+    },
+    {
+      "file": "zones/n57-v3-r1.flac",
+      "root": 57,
+      "lo": 56,
+      "hi": 58,
+      "velLo": 57,
+      "velHi": 80,
+      "sha256": "67c84eda0b34e6340ea00ae46e954d4ad620cc4670350de9f475755fa610e5e3",
+      "bytes": 223568
+    },
+    {
+      "file": "zones/n57-v4-r1.flac",
+      "root": 57,
+      "lo": 56,
+      "hi": 58,
+      "velLo": 81,
+      "velHi": 96,
+      "sha256": "9c55f4af4cf2233dbb38f73b0c75d6f218c57667650a16abf291cd3d312859ee",
+      "bytes": 248126
+    },
+    {
+      "file": "zones/n57-v5-r1.flac",
+      "root": 57,
+      "lo": 56,
+      "hi": 58,
+      "velLo": 97,
+      "velHi": 120,
+      "sha256": "982a48c7bdcaf9500927ef34ec8446798dac4d6c62a52cf736b13a9fc1a26c34",
+      "bytes": 264792
+    },
+    {
+      "file": "zones/n57-v6-r1.flac",
+      "root": 57,
+      "lo": 56,
+      "hi": 58,
+      "velLo": 121,
+      "velHi": 127,
+      "sha256": "db8f25d43941c5090f32f44b1a2510399db349dbd11dc39f791604b0054b730c",
+      "bytes": 293569
+    },
+    {
+      "file": "zones/n60-v1-r1.flac",
+      "root": 60,
+      "lo": 59,
+      "hi": 61,
+      "velLo": 1,
+      "velHi": 43,
+      "sha256": "e57544ad57052fae6a6edac83bab73caff5be13ac00cab5b94a3152abfe05423",
+      "bytes": 193520
+    },
+    {
+      "file": "zones/n60-v2-r1.flac",
+      "root": 60,
+      "lo": 59,
+      "hi": 61,
+      "velLo": 44,
+      "velHi": 56,
+      "sha256": "4be2e17e5cf5f30bfffe5768471171922da884d024c8fbf18e4708afff665d40",
+      "bytes": 220294
+    },
+    {
+      "file": "zones/n60-v3-r1.flac",
+      "root": 60,
+      "lo": 59,
+      "hi": 61,
+      "velLo": 57,
+      "velHi": 80,
+      "sha256": "e515becc1626f24f86488aab7aaffb91685e937786b92268c73256fc5e22ae34",
+      "bytes": 236496
+    },
+    {
+      "file": "zones/n60-v4-r1.flac",
+      "root": 60,
+      "lo": 59,
+      "hi": 61,
+      "velLo": 81,
+      "velHi": 96,
+      "sha256": "1397e45764e578c8c673362d85f4f0e799ccdbaa4ba052573f94b6fb9fef5b36",
+      "bytes": 266572
+    },
+    {
+      "file": "zones/n60-v5-r1.flac",
+      "root": 60,
+      "lo": 59,
+      "hi": 61,
+      "velLo": 97,
+      "velHi": 120,
+      "sha256": "ea960ff79a54200f6e9f52f6b49867f08805b7d401f14a49575c68a48fa642d2",
+      "bytes": 276368
+    },
+    {
+      "file": "zones/n60-v6-r1.flac",
+      "root": 60,
+      "lo": 59,
+      "hi": 61,
+      "velLo": 121,
+      "velHi": 127,
+      "sha256": "1cbf239b95733d323b90f0fab0fb61fd83f83b19dce4ec2a009addda65059b06",
+      "bytes": 286382
+    },
+    {
+      "file": "zones/n63-v1-r1.flac",
+      "root": 63,
+      "lo": 62,
+      "hi": 64,
+      "velLo": 1,
+      "velHi": 43,
+      "sha256": "c92bd5fb44994cd9ef14f7ce0833e102351a848e73faf308a8b7a2f757b55e2f",
+      "bytes": 194371
+    },
+    {
+      "file": "zones/n63-v2-r1.flac",
+      "root": 63,
+      "lo": 62,
+      "hi": 64,
+      "velLo": 44,
+      "velHi": 56,
+      "sha256": "e26ec2cdac0dbb6c27a82db8574733fa3cf3d0ab0e132913052208cd6a6eafe8",
+      "bytes": 210670
+    },
+    {
+      "file": "zones/n63-v3-r1.flac",
+      "root": 63,
+      "lo": 62,
+      "hi": 64,
+      "velLo": 57,
+      "velHi": 80,
+      "sha256": "e03c0b439d07ae3218dcb13dd0b9704ad9ea725061fa9b131b297df35b353942",
+      "bytes": 222111
+    },
+    {
+      "file": "zones/n63-v4-r1.flac",
+      "root": 63,
+      "lo": 62,
+      "hi": 64,
+      "velLo": 81,
+      "velHi": 96,
+      "sha256": "1ea4a4babbf6ddb8145ae230a679e2e5635b6b21a315bba8221071dd84827bc9",
+      "bytes": 229609
+    },
+    {
+      "file": "zones/n63-v5-r1.flac",
+      "root": 63,
+      "lo": 62,
+      "hi": 64,
+      "velLo": 97,
+      "velHi": 120,
+      "sha256": "e396639c15d2dcfc3844169d696db7cb54005f9c797c2fff3180ba5d35f848b9",
+      "bytes": 237817
+    },
+    {
+      "file": "zones/n63-v6-r1.flac",
+      "root": 63,
+      "lo": 62,
+      "hi": 64,
+      "velLo": 121,
+      "velHi": 127,
+      "sha256": "bf39528cd40e489d75938cd1d980d63954ed964e479b8821c97292ca66966dac",
+      "bytes": 263636
+    },
+    {
+      "file": "zones/n66-v1-r1.flac",
+      "root": 66,
+      "lo": 65,
+      "hi": 67,
+      "velLo": 1,
+      "velHi": 43,
+      "sha256": "e04a55076d7ab529c3ae1c107ba6c3a7c8ae4b48bdd557c9857e00e78899e0e6",
+      "bytes": 177734
+    },
+    {
+      "file": "zones/n66-v2-r1.flac",
+      "root": 66,
+      "lo": 65,
+      "hi": 67,
+      "velLo": 44,
+      "velHi": 56,
+      "sha256": "8449905b8aa8a5c875c6b18b955958cf81cd661caac9296157eb670d5f912e68",
+      "bytes": 200673
+    },
+    {
+      "file": "zones/n66-v3-r1.flac",
+      "root": 66,
+      "lo": 65,
+      "hi": 67,
+      "velLo": 57,
+      "velHi": 80,
+      "sha256": "6ce48c59f9c1a0f9be914d3d87634004ee5bb1d2c18f0007c3068327686383d7",
+      "bytes": 212397
+    },
+    {
+      "file": "zones/n66-v4-r1.flac",
+      "root": 66,
+      "lo": 65,
+      "hi": 67,
+      "velLo": 81,
+      "velHi": 96,
+      "sha256": "e3797870f99045f7c90f85c0817f79121c5bd3f0396765968459bed04f5a3301",
+      "bytes": 223852
+    },
+    {
+      "file": "zones/n66-v5-r1.flac",
+      "root": 66,
+      "lo": 65,
+      "hi": 67,
+      "velLo": 97,
+      "velHi": 120,
+      "sha256": "73c6f1868948ebe71ae9e8774c684279ab8e14ab5508607f3d91c7cdda509350",
+      "bytes": 234906
+    },
+    {
+      "file": "zones/n66-v6-r1.flac",
+      "root": 66,
+      "lo": 65,
+      "hi": 67,
+      "velLo": 121,
+      "velHi": 127,
+      "sha256": "27887b0801b47c807f684b74f4e5aa410f3ab212cd93a3641c8333d077586207",
+      "bytes": 260753
+    },
+    {
+      "file": "zones/n69-v1-r1.flac",
+      "root": 69,
+      "lo": 68,
+      "hi": 70,
+      "velLo": 1,
+      "velHi": 43,
+      "sha256": "16837043373c3032a44355f423c0f1032a3a65ab56fdafb0f7c44ae14de48f1f",
+      "bytes": 174941
+    },
+    {
+      "file": "zones/n69-v2-r1.flac",
+      "root": 69,
+      "lo": 68,
+      "hi": 70,
+      "velLo": 44,
+      "velHi": 56,
+      "sha256": "3ec9ade3544056936edaa0ec609071761d026813e678023cd19598e550664917",
+      "bytes": 201780
+    },
+    {
+      "file": "zones/n69-v3-r1.flac",
+      "root": 69,
+      "lo": 68,
+      "hi": 70,
+      "velLo": 57,
+      "velHi": 80,
+      "sha256": "e921ec7d9aba9e520e535549956cbeca7ec4e102c562e671cd06d9ad070ffabd",
+      "bytes": 214307
+    },
+    {
+      "file": "zones/n69-v4-r1.flac",
+      "root": 69,
+      "lo": 68,
+      "hi": 70,
+      "velLo": 81,
+      "velHi": 96,
+      "sha256": "394e46caa922fc7367402fb1d94016fb5c75bb5c02871a7bdd468923e1409b0f",
+      "bytes": 227309
+    },
+    {
+      "file": "zones/n69-v5-r1.flac",
+      "root": 69,
+      "lo": 68,
+      "hi": 70,
+      "velLo": 97,
+      "velHi": 120,
+      "sha256": "ea7044987b2ea9be655f9e5f68fa0cc91886a6757e342d5ca61d60e90214acee",
+      "bytes": 235342
+    },
+    {
+      "file": "zones/n69-v6-r1.flac",
+      "root": 69,
+      "lo": 68,
+      "hi": 70,
+      "velLo": 121,
+      "velHi": 127,
+      "sha256": "3f246fbaeb38efd7c6adc18048be9c0132cb63c74eae252d2199216b1f06cbad",
+      "bytes": 257016
+    },
+    {
+      "file": "zones/n72-v1-r1.flac",
+      "root": 72,
+      "lo": 71,
+      "hi": 73,
+      "velLo": 1,
+      "velHi": 43,
+      "sha256": "a439b822528d2713c1c396123bd43ee75cd0173d8a4d8c13bad4a1e7dff8acf6",
+      "bytes": 168311
+    },
+    {
+      "file": "zones/n72-v2-r1.flac",
+      "root": 72,
+      "lo": 71,
+      "hi": 73,
+      "velLo": 44,
+      "velHi": 56,
+      "sha256": "561cb78a80591eae7faceb63df824ee5be4510d609eef8a7420efc57264a3ec1",
+      "bytes": 196085
+    },
+    {
+      "file": "zones/n72-v3-r1.flac",
+      "root": 72,
+      "lo": 71,
+      "hi": 73,
+      "velLo": 57,
+      "velHi": 80,
+      "sha256": "c9fa35ba5969fd7270cdc8818d72a97a17ef70c563b47d79c352936096fcd095",
+      "bytes": 203366
+    },
+    {
+      "file": "zones/n72-v4-r1.flac",
+      "root": 72,
+      "lo": 71,
+      "hi": 73,
+      "velLo": 81,
+      "velHi": 96,
+      "sha256": "4b4eac6133f3e10718bdaa469f476ea5691ad85eb98e8dd93b2cf99a6afc319f",
+      "bytes": 216328
+    },
+    {
+      "file": "zones/n72-v5-r1.flac",
+      "root": 72,
+      "lo": 71,
+      "hi": 73,
+      "velLo": 97,
+      "velHi": 120,
+      "sha256": "d17d0c0a8abc71baed9bfd7605c00c5ece2954c0720304f19587762809288fae",
+      "bytes": 228053
+    },
+    {
+      "file": "zones/n72-v6-r1.flac",
+      "root": 72,
+      "lo": 71,
+      "hi": 73,
+      "velLo": 121,
+      "velHi": 127,
+      "sha256": "526f63af755455232d5df3b748fea140021939b3a192aff35613a2984ba3b365",
+      "bytes": 250851
+    },
+    {
+      "file": "zones/n75-v1-r1.flac",
+      "root": 75,
+      "lo": 74,
+      "hi": 76,
+      "velLo": 1,
+      "velHi": 43,
+      "sha256": "9ca5c4dfe2fde30b72baccecb9cc174ea72d3b0b26aa779cdcdf8b8e810998b6",
+      "bytes": 181790
+    },
+    {
+      "file": "zones/n75-v2-r1.flac",
+      "root": 75,
+      "lo": 74,
+      "hi": 76,
+      "velLo": 44,
+      "velHi": 56,
+      "sha256": "87fc560b52fa0bad12acb5e397b1ffa21f5e95f3eef07638b85c65e8de0dae0a",
+      "bytes": 200772
+    },
+    {
+      "file": "zones/n75-v3-r1.flac",
+      "root": 75,
+      "lo": 74,
+      "hi": 76,
+      "velLo": 57,
+      "velHi": 80,
+      "sha256": "6cb0ac9608638a1d013ba88befb59387487fed24de0610ad7cf249b606d8b997",
+      "bytes": 209988
+    },
+    {
+      "file": "zones/n75-v4-r1.flac",
+      "root": 75,
+      "lo": 74,
+      "hi": 76,
+      "velLo": 81,
+      "velHi": 96,
+      "sha256": "eeb2c411ee5f7b21e3d1cb0d011939145ccdad0926a537dff0095348eb097167",
+      "bytes": 225669
+    },
+    {
+      "file": "zones/n75-v5-r1.flac",
+      "root": 75,
+      "lo": 74,
+      "hi": 76,
+      "velLo": 97,
+      "velHi": 120,
+      "sha256": "ab98484056e728208b4131ecc63f19b9a6326c50e7d4515d23f446a417afc2ac",
+      "bytes": 239128
+    },
+    {
+      "file": "zones/n75-v6-r1.flac",
+      "root": 75,
+      "lo": 74,
+      "hi": 76,
+      "velLo": 121,
+      "velHi": 127,
+      "sha256": "bdfe2afa968d48b263d194f298359b0a1acc22fadd1d6a9ef85a6fa8bb193d6c",
+      "bytes": 268090
+    },
+    {
+      "file": "zones/n78-v1-r1.flac",
+      "root": 78,
+      "lo": 77,
+      "hi": 79,
+      "velLo": 1,
+      "velHi": 43,
+      "sha256": "2fa749008f86984cd7d60fa6885af72bb40f3eaef9fe56999f81d6ca653fd2a9",
+      "bytes": 179859
+    },
+    {
+      "file": "zones/n78-v2-r1.flac",
+      "root": 78,
+      "lo": 77,
+      "hi": 79,
+      "velLo": 44,
+      "velHi": 56,
+      "sha256": "0644ead114f3606b6f1eb2a4e3740af2aba46777f5eef3984e51d09c121ac91b",
+      "bytes": 193156
+    },
+    {
+      "file": "zones/n78-v3-r1.flac",
+      "root": 78,
+      "lo": 77,
+      "hi": 79,
+      "velLo": 57,
+      "velHi": 80,
+      "sha256": "f646b46305bcf064342e768cd4f7fc70b35bf446e9772b46ca1fdb41563018d9",
+      "bytes": 201988
+    },
+    {
+      "file": "zones/n78-v4-r1.flac",
+      "root": 78,
+      "lo": 77,
+      "hi": 79,
+      "velLo": 81,
+      "velHi": 96,
+      "sha256": "4ad53bcba0ec5bd128a8e5d501fd48132e172392f6dc3adad4c0f9a8d1048d76",
+      "bytes": 213188
+    },
+    {
+      "file": "zones/n78-v5-r1.flac",
+      "root": 78,
+      "lo": 77,
+      "hi": 79,
+      "velLo": 97,
+      "velHi": 120,
+      "sha256": "9cd686a26e66caf8c09025b56fb0004d055b923970ebbc18c0d123f3e64e682e",
+      "bytes": 224210
+    },
+    {
+      "file": "zones/n78-v6-r1.flac",
+      "root": 78,
+      "lo": 77,
+      "hi": 79,
+      "velLo": 121,
+      "velHi": 127,
+      "sha256": "0e05b5c271406afc91ce6f2c1e5f7c030ccf309d9a2963c88a44190d9b2c433d",
+      "bytes": 249560
+    },
+    {
+      "file": "zones/n81-v1-r1.flac",
+      "root": 81,
+      "lo": 80,
+      "hi": 82,
+      "velLo": 1,
+      "velHi": 43,
+      "sha256": "1a7fe5add5acf4fe39dee66edfec66dd5a23430294e2ee6a9484370cd1d3d0b2",
+      "bytes": 135817
+    },
+    {
+      "file": "zones/n81-v2-r1.flac",
+      "root": 81,
+      "lo": 80,
+      "hi": 82,
+      "velLo": 44,
+      "velHi": 56,
+      "sha256": "4cd8540c2494cb2ea426daf83984a9cd02c7b9f6f26f8646a256d3de6298f507",
+      "bytes": 186472
+    },
+    {
+      "file": "zones/n81-v3-r1.flac",
+      "root": 81,
+      "lo": 80,
+      "hi": 82,
+      "velLo": 57,
+      "velHi": 80,
+      "sha256": "fc170b2c7a258b5e948f76c19e741dac6aaf4f24abf9b23da5c3a88bf8f99a24",
+      "bytes": 205929
+    },
+    {
+      "file": "zones/n81-v4-r1.flac",
+      "root": 81,
+      "lo": 80,
+      "hi": 82,
+      "velLo": 81,
+      "velHi": 96,
+      "sha256": "a25b90fbad7bea9d1bc52707711e0470e5d1ff578e48694a2727be199372effc",
+      "bytes": 219047
+    },
+    {
+      "file": "zones/n81-v5-r1.flac",
+      "root": 81,
+      "lo": 80,
+      "hi": 82,
+      "velLo": 97,
+      "velHi": 120,
+      "sha256": "b32afdcf9b9e42727aeb011d229a4389ef3c6c23166faefe68d7da84a3076a59",
+      "bytes": 232926
+    },
+    {
+      "file": "zones/n81-v6-r1.flac",
+      "root": 81,
+      "lo": 80,
+      "hi": 82,
+      "velLo": 121,
+      "velHi": 127,
+      "sha256": "aeb3c77c7164ef07b2e67dba531e6105bb24dd884df2cc2b6df6755acb45792e",
+      "bytes": 252822
+    },
+    {
+      "file": "zones/n84-v1-r1.flac",
+      "root": 84,
+      "lo": 83,
+      "hi": 85,
+      "velLo": 1,
+      "velHi": 43,
+      "sha256": "026ff998b40fdd2ac9900458ac01ccf52d9e68db84a5e3ee6c0bccf3714da8e9",
+      "bytes": 105810
+    },
+    {
+      "file": "zones/n84-v2-r1.flac",
+      "root": 84,
+      "lo": 83,
+      "hi": 85,
+      "velLo": 44,
+      "velHi": 56,
+      "sha256": "68e7ca4dc2233528acfe13b08a348e0f96fb12ba93d9e72eccfdab3b421148e5",
+      "bytes": 130141
+    },
+    {
+      "file": "zones/n84-v3-r1.flac",
+      "root": 84,
+      "lo": 83,
+      "hi": 85,
+      "velLo": 57,
+      "velHi": 80,
+      "sha256": "47b32e08bee3359f2a072cdd26f8a7b794687e863c5fe878dc007a99de88cf28",
+      "bytes": 146658
+    },
+    {
+      "file": "zones/n84-v4-r1.flac",
+      "root": 84,
+      "lo": 83,
+      "hi": 85,
+      "velLo": 81,
+      "velHi": 96,
+      "sha256": "c4ad489fbfa74650ed0b7a1930d8fa934e68d66bd9f99b1ef1848039f1bfb732",
+      "bytes": 168077
+    },
+    {
+      "file": "zones/n84-v5-r1.flac",
+      "root": 84,
+      "lo": 83,
+      "hi": 85,
+      "velLo": 97,
+      "velHi": 120,
+      "sha256": "206a92a69ad5f1d804edbb44f6b169b20864ee53162ca2e7446ac860c47aaefb",
+      "bytes": 166644
+    },
+    {
+      "file": "zones/n84-v6-r1.flac",
+      "root": 84,
+      "lo": 83,
+      "hi": 85,
+      "velLo": 121,
+      "velHi": 127,
+      "sha256": "77d63fb79ddd00dd0eec281e29a457616d32549783d0542563ef0bdd6c2e5b8c",
+      "bytes": 185421
+    },
+    {
+      "file": "zones/n87-v1-r1.flac",
+      "root": 87,
+      "lo": 86,
+      "hi": 88,
+      "velLo": 1,
+      "velHi": 43,
+      "sha256": "9ea2dfbfcd7b96a15fdd88db499a680d3033e17dbb563b51e731691731680d4f",
+      "bytes": 154218
+    },
+    {
+      "file": "zones/n87-v2-r1.flac",
+      "root": 87,
+      "lo": 86,
+      "hi": 88,
+      "velLo": 44,
+      "velHi": 56,
+      "sha256": "15af2f9f9316ed36fdbd435c4b3c5787ce65ecd51cb06370a86b0ab46ac71c62",
+      "bytes": 177992
+    },
+    {
+      "file": "zones/n87-v3-r1.flac",
+      "root": 87,
+      "lo": 86,
+      "hi": 88,
+      "velLo": 57,
+      "velHi": 80,
+      "sha256": "5a19d735ef0d7fbf6db06dcfd3808c19f8c937d9d9be8e0773f4b4fe46c7fbd3",
+      "bytes": 191733
+    },
+    {
+      "file": "zones/n87-v4-r1.flac",
+      "root": 87,
+      "lo": 86,
+      "hi": 88,
+      "velLo": 81,
+      "velHi": 96,
+      "sha256": "fb400085c5d6e073730e0afeab6f62f06ab5cbf1fde704cd21c97c600113fbd0",
+      "bytes": 201804
+    },
+    {
+      "file": "zones/n87-v5-r1.flac",
+      "root": 87,
+      "lo": 86,
+      "hi": 88,
+      "velLo": 97,
+      "velHi": 120,
+      "sha256": "bbfd9d34b35a5066ee21976d2ec53992acac51a96ac8b5718972256f8a5d5e28",
+      "bytes": 209744
+    },
+    {
+      "file": "zones/n87-v6-r1.flac",
+      "root": 87,
+      "lo": 86,
+      "hi": 88,
+      "velLo": 121,
+      "velHi": 127,
+      "sha256": "662a41b6e363a0061ab2ec85c0ffa6886ac70c6896e34ef29233ee20e8ba00c9",
+      "bytes": 217130
+    },
+    {
+      "file": "zones/n90-v1-r1.flac",
+      "root": 90,
+      "lo": 89,
+      "hi": 91,
+      "velLo": 1,
+      "velHi": 43,
+      "sha256": "8c55327be484dc7cdf95c0537e84be89574ffc1f37d83e72a23cf73316b969ee",
+      "bytes": 109753
+    },
+    {
+      "file": "zones/n90-v2-r1.flac",
+      "root": 90,
+      "lo": 89,
+      "hi": 91,
+      "velLo": 44,
+      "velHi": 56,
+      "sha256": "a8043b3ef294135adf3ac862239c4eaab3b254e75d574a03e1734a12aa8f5350",
+      "bytes": 146353
+    },
+    {
+      "file": "zones/n90-v3-r1.flac",
+      "root": 90,
+      "lo": 89,
+      "hi": 91,
+      "velLo": 57,
+      "velHi": 80,
+      "sha256": "267944ca9ebba0a8f45e6a1eead0b0351fc9288400d34df80a7bfd577d5c08be",
+      "bytes": 160683
+    },
+    {
+      "file": "zones/n90-v4-r1.flac",
+      "root": 90,
+      "lo": 89,
+      "hi": 91,
+      "velLo": 81,
+      "velHi": 96,
+      "sha256": "c22feb5d0f87142dfc9a2f070279b923799f8106c7707878e9c576423ca74119",
+      "bytes": 173679
+    },
+    {
+      "file": "zones/n90-v5-r1.flac",
+      "root": 90,
+      "lo": 89,
+      "hi": 91,
+      "velLo": 97,
+      "velHi": 120,
+      "sha256": "10b97b1833abd0d4a9bb19aeefbb08f564e4e5f7cef2b000c698b1ffb2bee5e1",
+      "bytes": 173962
+    },
+    {
+      "file": "zones/n90-v6-r1.flac",
+      "root": 90,
+      "lo": 89,
+      "hi": 91,
+      "velLo": 121,
+      "velHi": 127,
+      "sha256": "3b8935816a6773101f32d2c682c1690cb95b532cb64c88d6ec61d37239975e57",
+      "bytes": 193259
+    },
+    {
+      "file": "zones/n93-v1-r1.flac",
+      "root": 93,
+      "lo": 92,
+      "hi": 94,
+      "velLo": 1,
+      "velHi": 43,
+      "sha256": "d701e8772a4a473891a887a914e4e932cf9b35196cd45bb6b6245c01ec700cda",
+      "bytes": 118030
+    },
+    {
+      "file": "zones/n93-v2-r1.flac",
+      "root": 93,
+      "lo": 92,
+      "hi": 94,
+      "velLo": 44,
+      "velHi": 56,
+      "sha256": "5a178912effece9e55491db0a4e194db7f1262d259c10c9bf0bf3c804a6822c1",
+      "bytes": 142347
+    },
+    {
+      "file": "zones/n93-v3-r1.flac",
+      "root": 93,
+      "lo": 92,
+      "hi": 94,
+      "velLo": 57,
+      "velHi": 80,
+      "sha256": "fff90b0340e7cc48acacf2c337185308d5560842beb5e168e045daf256bca5af",
+      "bytes": 146268
+    },
+    {
+      "file": "zones/n93-v4-r1.flac",
+      "root": 93,
+      "lo": 92,
+      "hi": 94,
+      "velLo": 81,
+      "velHi": 96,
+      "sha256": "fd6ef07452c446de8555a6d0f74c60765d2e976b44cf4f578eeeda87fa762380",
+      "bytes": 155301
+    },
+    {
+      "file": "zones/n93-v5-r1.flac",
+      "root": 93,
+      "lo": 92,
+      "hi": 94,
+      "velLo": 97,
+      "velHi": 120,
+      "sha256": "0f518ba548cd7c567bf58ed529217afc8a5bbafe7303ddac1b6f7a3c3a96a068",
+      "bytes": 167495
+    },
+    {
+      "file": "zones/n93-v6-r1.flac",
+      "root": 93,
+      "lo": 92,
+      "hi": 94,
+      "velLo": 121,
+      "velHi": 127,
+      "sha256": "8ebc730df079249c184443a6a3dfab346e8c6007ef335b9805aff5facca99006",
+      "bytes": 187629
+    },
+    {
+      "file": "zones/n96-v1-r1.flac",
+      "root": 96,
+      "lo": 95,
+      "hi": 97,
+      "velLo": 1,
+      "velHi": 43,
+      "sha256": "e6d2ad3f69be828790bd5528be09a3b1916faf3e35e68e57fbe18dc5b406fc70",
+      "bytes": 73009
+    },
+    {
+      "file": "zones/n96-v2-r1.flac",
+      "root": 96,
+      "lo": 95,
+      "hi": 97,
+      "velLo": 44,
+      "velHi": 56,
+      "sha256": "83dd157635ae6baa215811a89c46b4268f9536d0fb7b5d6e89d4d0e36cbf7b7e",
+      "bytes": 82420
+    },
+    {
+      "file": "zones/n96-v3-r1.flac",
+      "root": 96,
+      "lo": 95,
+      "hi": 97,
+      "velLo": 57,
+      "velHi": 80,
+      "sha256": "1bbc4137e8f5eff3929bc86e1e204a26538e60f7982c0b9c12d0fe9254c88e99",
+      "bytes": 90608
+    },
+    {
+      "file": "zones/n96-v4-r1.flac",
+      "root": 96,
+      "lo": 95,
+      "hi": 97,
+      "velLo": 81,
+      "velHi": 96,
+      "sha256": "7a2df9aee68bbe951065369d11507273268c351c5f4df673be161be89c76a8bf",
+      "bytes": 102227
+    },
+    {
+      "file": "zones/n96-v5-r1.flac",
+      "root": 96,
+      "lo": 95,
+      "hi": 97,
+      "velLo": 97,
+      "velHi": 120,
+      "sha256": "c131d7e9bfd25a6c6fe9d14aab06bfece324f06fc9a3671b2fcbb5000eaef240",
+      "bytes": 111391
+    },
+    {
+      "file": "zones/n96-v6-r1.flac",
+      "root": 96,
+      "lo": 95,
+      "hi": 97,
+      "velLo": 121,
+      "velHi": 127,
+      "sha256": "193762867825bbb80aca4a4afc248e85c7c887375ee08bcb1b0ea65290918168",
+      "bytes": 116289
+    },
+    {
+      "file": "zones/n99-v1-r1.flac",
+      "root": 99,
+      "lo": 98,
+      "hi": 100,
+      "velLo": 1,
+      "velHi": 43,
+      "sha256": "a5c697aae8ed735f0cdfe4810c0f51db467c94d9accad815e83098a1239380e8",
+      "bytes": 98167
+    },
+    {
+      "file": "zones/n99-v2-r1.flac",
+      "root": 99,
+      "lo": 98,
+      "hi": 100,
+      "velLo": 44,
+      "velHi": 56,
+      "sha256": "f89e65843a73a6a2186c4ab13c5b5936fb7b21da38a98b3a080299841b806643",
+      "bytes": 100437
+    },
+    {
+      "file": "zones/n99-v3-r1.flac",
+      "root": 99,
+      "lo": 98,
+      "hi": 100,
+      "velLo": 57,
+      "velHi": 80,
+      "sha256": "774b9cc1aeaa28c9247ea5e3a1e9232481bd679778acc0c142b8edaae8d2d9a5",
+      "bytes": 108669
+    },
+    {
+      "file": "zones/n99-v4-r1.flac",
+      "root": 99,
+      "lo": 98,
+      "hi": 100,
+      "velLo": 81,
+      "velHi": 96,
+      "sha256": "5445a22454a15b94779db8d5ef3293b681b27cc03ceb77fe1ffb9008848fd16a",
+      "bytes": 122758
+    },
+    {
+      "file": "zones/n99-v5-r1.flac",
+      "root": 99,
+      "lo": 98,
+      "hi": 100,
+      "velLo": 97,
+      "velHi": 120,
+      "sha256": "1861896e3c5e8424562e071f8b5499bf9b18592baf280178e95ec0fcbf68e7c7",
+      "bytes": 123228
+    },
+    {
+      "file": "zones/n99-v6-r1.flac",
+      "root": 99,
+      "lo": 98,
+      "hi": 100,
+      "velLo": 121,
+      "velHi": 127,
+      "sha256": "608ba19f7fa443eabb4e7aad407bababe890a77cbfe542e39862fb0553055c24",
+      "bytes": 148972
+    },
+    {
+      "file": "zones/n102-v1-r1.flac",
+      "root": 102,
+      "lo": 101,
+      "hi": 103,
+      "velLo": 1,
+      "velHi": 43,
+      "sha256": "286659dd68d947b31a55d1e248be87e3d7dc7010387e2696b1c5b803c3965866",
+      "bytes": 125148
+    },
+    {
+      "file": "zones/n102-v2-r1.flac",
+      "root": 102,
+      "lo": 101,
+      "hi": 103,
+      "velLo": 44,
+      "velHi": 56,
+      "sha256": "c3032e60ff023c28986e790d0028733e3c872b6b2fdcd58892af0368757a0509",
+      "bytes": 133236
+    },
+    {
+      "file": "zones/n102-v3-r1.flac",
+      "root": 102,
+      "lo": 101,
+      "hi": 103,
+      "velLo": 57,
+      "velHi": 80,
+      "sha256": "e006670e635919da753f36e0b961a3318b980d99d9c02d27e8a53a6e92f8d453",
+      "bytes": 143591
+    },
+    {
+      "file": "zones/n102-v4-r1.flac",
+      "root": 102,
+      "lo": 101,
+      "hi": 103,
+      "velLo": 81,
+      "velHi": 96,
+      "sha256": "035c8c278917fbeb1f4365501aa1204458e1159a614ccde66eb133b07db83f39",
+      "bytes": 158811
+    },
+    {
+      "file": "zones/n102-v5-r1.flac",
+      "root": 102,
+      "lo": 101,
+      "hi": 103,
+      "velLo": 97,
+      "velHi": 120,
+      "sha256": "700da219b1a6713c86aed3997ed7c6a72960eb1e62b0ab7322dd566caf34071c",
+      "bytes": 157742
+    },
+    {
+      "file": "zones/n102-v6-r1.flac",
+      "root": 102,
+      "lo": 101,
+      "hi": 103,
+      "velLo": 121,
+      "velHi": 127,
+      "sha256": "68c8079a5974fe3909f4e23456c7728d6a0bfd5bc59b8f111c0fda019a9962c7",
+      "bytes": 166210
+    },
+    {
+      "file": "zones/n105-v1-r1.flac",
+      "root": 105,
+      "lo": 104,
+      "hi": 106,
+      "velLo": 1,
+      "velHi": 43,
+      "sha256": "f556bf7bedab2f5560a150232d7eb6ff7fb308b1094e2d3811fe5350bb83c877",
+      "bytes": 63176
+    },
+    {
+      "file": "zones/n105-v2-r1.flac",
+      "root": 105,
+      "lo": 104,
+      "hi": 106,
+      "velLo": 44,
+      "velHi": 56,
+      "sha256": "736526473cb921b1ce34805ebd3ff7d1f944f8dbd4336ed1279603b750946088",
+      "bytes": 84832
+    },
+    {
+      "file": "zones/n105-v3-r1.flac",
+      "root": 105,
+      "lo": 104,
+      "hi": 106,
+      "velLo": 57,
+      "velHi": 80,
+      "sha256": "ed8cc1161f12738ae9d08489b165cab058d2b8ac3d3580571200d05f06a45ea1",
+      "bytes": 94112
+    },
+    {
+      "file": "zones/n105-v4-r1.flac",
+      "root": 105,
+      "lo": 104,
+      "hi": 106,
+      "velLo": 81,
+      "velHi": 96,
+      "sha256": "a760520bd581b2149d65b2949ddc79b9f01d7412e0de48fc0eddbf2ee54fe1a8",
+      "bytes": 98904
+    },
+    {
+      "file": "zones/n105-v5-r1.flac",
+      "root": 105,
+      "lo": 104,
+      "hi": 106,
+      "velLo": 97,
+      "velHi": 120,
+      "sha256": "4061bbe051ff2835fa7ad3a816468b3ad3e28fecbf0b0e51b1aa74511dfd188a",
+      "bytes": 105901
+    },
+    {
+      "file": "zones/n105-v6-r1.flac",
+      "root": 105,
+      "lo": 104,
+      "hi": 106,
+      "velLo": 121,
+      "velHi": 127,
+      "sha256": "d4ae9998d6801e7f7ce71aaf4f58d249dafd728f611288cedde935674d76b83c",
+      "bytes": 117516
+    },
+    {
+      "file": "zones/n108-v1-r1.flac",
+      "root": 108,
+      "lo": 107,
+      "hi": 108,
+      "velLo": 1,
+      "velHi": 43,
+      "sha256": "05500d9bd9cea1559d495239b22726305dae01c1dc53bb5d31065db0aef528bd",
+      "bytes": 68938
+    },
+    {
+      "file": "zones/n108-v2-r1.flac",
+      "root": 108,
+      "lo": 107,
+      "hi": 108,
+      "velLo": 44,
+      "velHi": 56,
+      "sha256": "528a5d2be4645d7a521e0911189cd95c10726894ba342471ea8f2d4004f246d4",
+      "bytes": 68059
+    },
+    {
+      "file": "zones/n108-v3-r1.flac",
+      "root": 108,
+      "lo": 107,
+      "hi": 108,
+      "velLo": 57,
+      "velHi": 80,
+      "sha256": "2d6cee5ea51102b10b16040842105eefab6483b74c678fc7720fd98f743a19df",
+      "bytes": 94544
+    },
+    {
+      "file": "zones/n108-v4-r1.flac",
+      "root": 108,
+      "lo": 107,
+      "hi": 108,
+      "velLo": 81,
+      "velHi": 96,
+      "sha256": "050259263e6eb05e9769afe3a77d2000bc611d94b2906953f44f97fc299d09f9",
+      "bytes": 98538
+    },
+    {
+      "file": "zones/n108-v5-r1.flac",
+      "root": 108,
+      "lo": 107,
+      "hi": 108,
+      "velLo": 97,
+      "velHi": 120,
+      "sha256": "518ac6a70ea54d1e9ad4d1781ccd6395ebb45da779f5b3bf17ec7d0ac8a5f538",
+      "bytes": 108337
+    },
+    {
+      "file": "zones/n108-v6-r1.flac",
+      "root": 108,
+      "lo": 107,
+      "hi": 108,
+      "velLo": 121,
+      "velHi": 127,
+      "sha256": "88104cfa4862dd462c4a247f76d0c8273b57a4ffa49e583d599abecfe44c9c13",
+      "bytes": 111648
+    }
+  ]
+}
