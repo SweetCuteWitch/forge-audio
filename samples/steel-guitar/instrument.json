@@ -1,0 +1,171 @@
+{
+  "format": "forge/instrument@1",
+  "id": "steel-guitar",
+  "name": "Steel-string guitar",
+  "category": "guitar",
+  "description": "a Martin HD28 steel-string acoustic guitar, plucked",
+  "role": "harmony",
+  "low": 40,
+  "high": 84,
+  "gm": 25,
+  "release": 0.4,
+  "sustain": false,
+  "licence": {
+    "name": "CC0-1.0",
+    "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "author": "Jeff Learman, for the Discord SFZ GM Bank",
+    "source": "https://github.com/sfzinstruments/Discord-SFZ-GM-Bank"
+  },
+  "zones": [
+    {
+      "file": "zones/n40-v1-r1.flac",
+      "root": 40,
+      "lo": 35,
+      "hi": 41,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "c8865e8ad8433a41fa2cf13f877b977199036e5455575c6c98666cfcf8de9e76",
+      "bytes": 132457
+    },
+    {
+      "file": "zones/n43-v1-r1.flac",
+      "root": 43,
+      "lo": 42,
+      "hi": 44,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "562c0ed348d814431ead17594f3876f98c6d1a70738af72e21873b7d45f12433",
+      "bytes": 60435
+    },
+    {
+      "file": "zones/n46-v1-r1.flac",
+      "root": 46,
+      "lo": 45,
+      "hi": 47,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "6bf56f4433b8f0e2defde206d0f250c86c39e8cee8409c39343cddd00f60dd26",
+      "bytes": 125373
+    },
+    {
+      "file": "zones/n49-v1-r1.flac",
+      "root": 49,
+      "lo": 48,
+      "hi": 50,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "adff8582ce3f44477429a6611adf65869fe7fbc47b9a43d87ba4b5bcb42c7f67",
+      "bytes": 78719
+    },
+    {
+      "file": "zones/n52-v1-r1.flac",
+      "root": 52,
+      "lo": 51,
+      "hi": 53,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "f9b7deae47be5b933aa9d2d81e96cfe31d6c248f54180db63e68d903b381baff",
+      "bytes": 110600
+    },
+    {
+      "file": "zones/n55-v1-r1.flac",
+      "root": 55,
+      "lo": 54,
+      "hi": 56,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "4b9898ba53eb0b63d716d5f606262cb41d939af786155378e7c5e06cf36e5b91",
+      "bytes": 71517
+    },
+    {
+      "file": "zones/n58-v1-r1.flac",
+      "root": 58,
+      "lo": 57,
+      "hi": 59,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "449140876bd8d55bd60eed6e32517620b6e50a9887faf4f5af0748de81adbb52",
+      "bytes": 105799
+    },
+    {
+      "file": "zones/n61-v1-r1.flac",
+      "root": 61,
+      "lo": 60,
+      "hi": 62,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "58cc621aa81251a52075fc0264122a613c9678c6cf19f399543d48f21b6bea2c",
+      "bytes": 91457
+    },
+    {
+      "file": "zones/n64-v1-r1.flac",
+      "root": 64,
+      "lo": 63,
+      "hi": 66,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "b1656d31c8bfb2ffbd16d3bcb18654e3fe682228b9e1dbe5f0fc2075db264e8b",
+      "bytes": 65650
+    },
+    {
+      "file": "zones/n68-v1-r1.flac",
+      "root": 68,
+      "lo": 67,
+      "hi": 69,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "7972112d777ee1e7efd5649302e25946d9f986962acfa5ef045f0b43734920d6",
+      "bytes": 61113
+    },
+    {
+      "file": "zones/n71-v1-r1.flac",
+      "root": 71,
+      "lo": 70,
+      "hi": 72,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "63ce77b7e93c2e853afd3319a5741e7a131412d2793977bf4ab8650e11d8de49",
+      "bytes": 46750
+    },
+    {
+      "file": "zones/n74-v1-r1.flac",
+      "root": 74,
+      "lo": 73,
+      "hi": 75,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "528c935cce2b8f29faf945e85dcc95e71f894850a6acf9dfdb4e6d9a5d51dc19",
+      "bytes": 32209
+    },
+    {
+      "file": "zones/n77-v1-r1.flac",
+      "root": 77,
+      "lo": 76,
+      "hi": 78,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "20ad5245df44ad7cf3f21d691aa6a8a25fab0bdaaa8f4d715068ebf537bb8ed8",
+      "bytes": 61730
+    },
+    {
+      "file": "zones/n80-v1-r1.flac",
+      "root": 80,
+      "lo": 79,
+      "hi": 81,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "c6bcca1212e5cf67627debc49f5d8e4d4211e128c28ed31a9b8b4cbaf7549d40",
+      "bytes": 40157
+    },
+    {
+      "file": "zones/n83-v1-r1.flac",
+      "root": 83,
+      "lo": 82,
+      "hi": 88,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "6121997eb90d1eac7683404604b4a4932d18bc8899c60477f88abf33e51e417b",
+      "bytes": 28302
+    }
+  ]
+}
