@@ -1,4 +1,4 @@
-// source-hash: d27e297447bc28581282b2fbfd2018ec9fd6542b0cb5734526850d6830b020be
+// source-hash: 1e0894c616390baff8b496b98dbeb9969367d0c0c6e19c0bfcf2319b1dd69f76
 // src/sound/dsp.ts
 var dbToGain = (db) => 10 ** (db / 20);
 var gainToDb = (gain) => 20 * Math.log10(Math.max(gain, 1e-9));
@@ -803,7 +803,7 @@ var STUDIO_DRUM_TAIL = {
 };
 
 // src/web/protocol.ts
-var BUNDLE_VERSION = true ? "d27e2974 2026-10-20" : "dev";
+var BUNDLE_VERSION = true ? "1e0894c6 2026-10-20" : "dev";
 var DEFAULT_SAMPLE_BASE_URL = "https://raw.githubusercontent.com/SweetCuteWitch/forge-audio/main/samples/";
 function synthList() {
   return Object.entries(INSTRUMENTS).filter(([id]) => id !== "sampler").map(([id, i]) => ({ id, low: i.low, high: i.high, role: i.role, description: i.description }));
@@ -2102,6 +2102,11 @@ function receive(msg, post) {
       return;
     }
     await handle(session, msg, post);
+  }).catch((e) => {
+    try {
+      post({ id: msg.id, type: "error", message: e instanceof Error ? e.message : String(e) });
+    } catch {
+    }
   });
 }
 self.onmessage = (e) => receive(e.data, (msg, transfer) => self.postMessage(msg, transfer ?? []));
