@@ -1,0 +1,501 @@
+{
+  "format": "forge/instrument@1",
+  "id": "nylon-guitar",
+  "name": "Nylon guitar",
+  "category": "guitar",
+  "description": "a Spanish classical guitar, plucked",
+  "role": "harmony",
+  "low": 40,
+  "high": 83,
+  "gm": 24,
+  "release": 0.4,
+  "sustain": false,
+  "licence": {
+    "name": "CC0-1.0",
+    "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "author": "roberto@zenvoid.org (FreePats project)",
+    "source": "https://freepats.zenvoid.org/Guitar/acoustic-guitar.html"
+  },
+  "zones": [
+    {
+      "file": "zones/n31-v1-r1.flac",
+      "root": 31,
+      "lo": 29,
+      "hi": 31,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "b9a36c1439fec57fce5a30158a1ffc9f5be02d399830c7172b80a246cbb8f4d0",
+      "bytes": 171752
+    },
+    {
+      "file": "zones/n32-v1-r1.flac",
+      "root": 32,
+      "lo": 32,
+      "hi": 32,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "d42bda19a45ea2e4579597ae28a52f6d565b872b801b31067ba06638b4960c04",
+      "bytes": 170181
+    },
+    {
+      "file": "zones/n33-v1-r1.flac",
+      "root": 33,
+      "lo": 33,
+      "hi": 33,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "69477dccf6920a9b879f191cf38095f8bcacc74ad675cc1fdc1ba02acd20ebc6",
+      "bytes": 170314
+    },
+    {
+      "file": "zones/n34-v1-r1.flac",
+      "root": 34,
+      "lo": 34,
+      "hi": 34,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "5625472d0735b27bb59e48e18bbbfda25f5544077849fe9b117108b1e6f87ac8",
+      "bytes": 172752
+    },
+    {
+      "file": "zones/n35-v1-r1.flac",
+      "root": 35,
+      "lo": 35,
+      "hi": 35,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "3c42b803bc31ebeedee77cb2b8d005e7beac9e8aa5afec1b7f45f78b5cf19a87",
+      "bytes": 174029
+    },
+    {
+      "file": "zones/n36-v1-r1.flac",
+      "root": 36,
+      "lo": 36,
+      "hi": 36,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "2f9f782a458f9b9182311280b5d52c1407a52f4808746be39509282f34b616e6",
+      "bytes": 171151
+    },
+    {
+      "file": "zones/n37-v1-r1.flac",
+      "root": 37,
+      "lo": 37,
+      "hi": 37,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "2b2d139f0fbbfb954ef33486a56ecfc782a17681ffd1de6973f707ecd40e5eaf",
+      "bytes": 174046
+    },
+    {
+      "file": "zones/n38-v1-r1.flac",
+      "root": 38,
+      "lo": 38,
+      "hi": 38,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "00d6c00b0f6e9329ada961c9cf38e566d2429248f151192d68017b1f102a7a7a",
+      "bytes": 173891
+    },
+    {
+      "file": "zones/n39-v1-r1.flac",
+      "root": 39,
+      "lo": 39,
+      "hi": 39,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "b23f8d43a05a04e72774699183a2030b50b315b73483b476f5fd1a9f2a7b3561",
+      "bytes": 174617
+    },
+    {
+      "file": "zones/n40-v1-r1.flac",
+      "root": 40,
+      "lo": 40,
+      "hi": 40,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "ffc6c1eb663b862fdb010e38e908a7d90f0bcab07ec943b50df8e012968b3ebb",
+      "bytes": 144721
+    },
+    {
+      "file": "zones/n41-v1-r1.flac",
+      "root": 41,
+      "lo": 41,
+      "hi": 41,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "850e1959412a525b0bd901f8053e8d4f962b2ef37e2e4ae1d5a4ad149964b7ac",
+      "bytes": 145507
+    },
+    {
+      "file": "zones/n43-v1-r1.flac",
+      "root": 43,
+      "lo": 42,
+      "hi": 43,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "2f5111d2739560f0d6b2ac608bd86baeb199490fcc951d2ca90c78048183c8a3",
+      "bytes": 145492
+    },
+    {
+      "file": "zones/n45-v1-r1.flac",
+      "root": 45,
+      "lo": 44,
+      "hi": 45,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "16608ef6930f1e4369c5011367e675bf227adda9b206663a812e8066ab6e969c",
+      "bytes": 150735
+    },
+    {
+      "file": "zones/n47-v1-r1.flac",
+      "root": 47,
+      "lo": 46,
+      "hi": 47,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "d8446a05e0b46619255e582ad3ea8924017ce7bda1859d6a8dd111283b69af20",
+      "bytes": 109208
+    },
+    {
+      "file": "zones/n48-v1-r1.flac",
+      "root": 48,
+      "lo": 48,
+      "hi": 48,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "01e62999f6ea9700d03391fbb9c30f297b4a3c58a1b7eeb3db424dcf569db67d",
+      "bytes": 117133
+    },
+    {
+      "file": "zones/n50-v1-r1.flac",
+      "root": 50,
+      "lo": 49,
+      "hi": 50,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "c9f90dd22974598af5a4cb03c2e087500694cfb81f35592ad3ca7bd78bfc5945",
+      "bytes": 132834
+    },
+    {
+      "file": "zones/n52-v1-r1.flac",
+      "root": 52,
+      "lo": 51,
+      "hi": 52,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "b1ae2274ab9d70d24b988a33f7357df55d8c8bacd23d3cde2d4348f196192847",
+      "bytes": 120972
+    },
+    {
+      "file": "zones/n53-v1-r1.flac",
+      "root": 53,
+      "lo": 53,
+      "hi": 53,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "52c7f34adbd6b35bb062ae052b9ee0707cbfc3d2409666726ff08e4bea1ceeae",
+      "bytes": 113277
+    },
+    {
+      "file": "zones/n54-v1-r1.flac",
+      "root": 54,
+      "lo": 54,
+      "hi": 54,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "9fc2f943bbc12580d0483d5f8ff085ea0bda8faeaee8b4d890ac78b2e3a553ae",
+      "bytes": 110763
+    },
+    {
+      "file": "zones/n55-v1-r1.flac",
+      "root": 55,
+      "lo": 55,
+      "hi": 55,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "2bb20a3a93351e94f2c8cfb726f8fe134ab1d732d2b2128d48a82bbd0e8da62b",
+      "bytes": 128279
+    },
+    {
+      "file": "zones/n56-v1-r1.flac",
+      "root": 56,
+      "lo": 56,
+      "hi": 56,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "0e928579af54bd1a81f285dc4051cbbe68c1d46ea229b4a4df1d41880b77b669",
+      "bytes": 88827
+    },
+    {
+      "file": "zones/n57-v1-r1.flac",
+      "root": 57,
+      "lo": 57,
+      "hi": 57,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "ab27b2bad74fe10862d1def3bde95eb9847b2d9431864a7d4b818b6d0f0d4a1f",
+      "bytes": 69750
+    },
+    {
+      "file": "zones/n58-v1-r1.flac",
+      "root": 58,
+      "lo": 58,
+      "hi": 58,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "035be0fde2cfa58a78c63306dbc7c816e936404cc4c54dcc77680919057da34a",
+      "bytes": 65771
+    },
+    {
+      "file": "zones/n59-v1-r1.flac",
+      "root": 59,
+      "lo": 59,
+      "hi": 59,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "3085a6c1191aefd1721d8f09b9ebddeffbddd35c3e819942e239de081409f00c",
+      "bytes": 65269
+    },
+    {
+      "file": "zones/n60-v1-r1.flac",
+      "root": 60,
+      "lo": 60,
+      "hi": 60,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "d146597dae322684b68812360b1e63679bbb595f9cd87ec5ade2de8272ec0a93",
+      "bytes": 69615
+    },
+    {
+      "file": "zones/n61-v1-r1.flac",
+      "root": 61,
+      "lo": 61,
+      "hi": 61,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "717462a8e788b92d67673ceab144bfa19832af61a2e53892c788c4872afcff75",
+      "bytes": 77775
+    },
+    {
+      "file": "zones/n62-v1-r1.flac",
+      "root": 62,
+      "lo": 62,
+      "hi": 62,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "4cf93289b16aa7dde654d4d65c02d7b30642824a4d7ea982916297f77c997ed5",
+      "bytes": 87460
+    },
+    {
+      "file": "zones/n63-v1-r1.flac",
+      "root": 63,
+      "lo": 63,
+      "hi": 63,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "19c32b0d375a9fa853073d8e2664c55b37b8e4fe58d952ab2e1093158f00bf47",
+      "bytes": 89663
+    },
+    {
+      "file": "zones/n64-v1-r1.flac",
+      "root": 64,
+      "lo": 64,
+      "hi": 64,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "1ed0d4e6f52efdfeb1e01c12917adbec5c08e27a4c8bc2efcc70763ea7f53afc",
+      "bytes": 112399
+    },
+    {
+      "file": "zones/n65-v1-r1.flac",
+      "root": 65,
+      "lo": 65,
+      "hi": 65,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "626cc3951fdee3d95fcd5a4359e4877c5903549e3bc8a8c53b79c9f62b35d1ff",
+      "bytes": 92888
+    },
+    {
+      "file": "zones/n66-v1-r1.flac",
+      "root": 66,
+      "lo": 66,
+      "hi": 66,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "ce10b7ff4bb07f7548958ad5b87378b63a02908f71e1fa83f2d8e81dfa897ff1",
+      "bytes": 90998
+    },
+    {
+      "file": "zones/n67-v1-r1.flac",
+      "root": 67,
+      "lo": 67,
+      "hi": 67,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "23853e12f9764fa7d90e3df804987cda4713a549cbd99b0304499ecca02efa7f",
+      "bytes": 75545
+    },
+    {
+      "file": "zones/n69-v1-r1.flac",
+      "root": 69,
+      "lo": 68,
+      "hi": 69,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "7d34970fb5cc6b956da7f90cc4eb2f78c20dadaa3dab817bffa24130d847cb7c",
+      "bytes": 121349
+    },
+    {
+      "file": "zones/n70-v1-r1.flac",
+      "root": 70,
+      "lo": 70,
+      "hi": 70,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "5d6d21149563300071271d1d33929a65a8186d17e89cc03e287d094b9500518e",
+      "bytes": 71058
+    },
+    {
+      "file": "zones/n71-v1-r1.flac",
+      "root": 71,
+      "lo": 71,
+      "hi": 71,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "d92dc37eb898dc41af7051cfbd06491ac2030763ae9a1be8da4eb7d1e689f748",
+      "bytes": 58550
+    },
+    {
+      "file": "zones/n72-v1-r1.flac",
+      "root": 72,
+      "lo": 72,
+      "hi": 72,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "0a7de9cf647f3fa60987e3a6b9a01448250d915d6d4118fd3de0af17cefa2430",
+      "bytes": 51372
+    },
+    {
+      "file": "zones/n73-v1-r1.flac",
+      "root": 73,
+      "lo": 73,
+      "hi": 73,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "47ffeb2394274c15d3885364763b30489f4e6965bc27ef2d725fc468d2f324bf",
+      "bytes": 54300
+    },
+    {
+      "file": "zones/n74-v1-r1.flac",
+      "root": 74,
+      "lo": 74,
+      "hi": 74,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "32d8e7129ae04b3a930178fc4dd81554b4bdeced4649f290e8a81f5f9c7723d2",
+      "bytes": 44922
+    },
+    {
+      "file": "zones/n75-v1-r1.flac",
+      "root": 75,
+      "lo": 75,
+      "hi": 75,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "6553a7bdb6fbe58646f555c91009b4d80c6f1e13b051adfc09dd345d30ee268b",
+      "bytes": 42137
+    },
+    {
+      "file": "zones/n76-v1-r1.flac",
+      "root": 76,
+      "lo": 76,
+      "hi": 76,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "d1c10e84cbbe3c293a279f2d9e7183c335a97deba613ab5cd12111c7cae1dc2f",
+      "bytes": 45618
+    },
+    {
+      "file": "zones/n77-v1-r1.flac",
+      "root": 77,
+      "lo": 77,
+      "hi": 77,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "98e20dfc92f276c9a880e0269214c5e68a01dea3fea35547bd0059eba8ed45e8",
+      "bytes": 49878
+    },
+    {
+      "file": "zones/n78-v1-r1.flac",
+      "root": 78,
+      "lo": 78,
+      "hi": 78,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "582b2b68bed47e4b850b2293242591dbbd0f855f89b730f73303e9ca167f485c",
+      "bytes": 47263
+    },
+    {
+      "file": "zones/n79-v1-r1.flac",
+      "root": 79,
+      "lo": 79,
+      "hi": 79,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "a2929fc7d0fb74fa41ca6084543e45904bc6608ca3a581e205f504cf8021e3e1",
+      "bytes": 49747
+    },
+    {
+      "file": "zones/n80-v1-r1.flac",
+      "root": 80,
+      "lo": 80,
+      "hi": 80,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "4720900f080d5831c37fab891a613ac6cb446e7d757a8e3ce1c8f35152a2133e",
+      "bytes": 33535
+    },
+    {
+      "file": "zones/n81-v1-r1.flac",
+      "root": 81,
+      "lo": 81,
+      "hi": 81,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "9e1cc03b66db12c558519118bfe5ae08b02737c77a6375a3cf2fee6af45708ca",
+      "bytes": 55797
+    },
+    {
+      "file": "zones/n82-v1-r1.flac",
+      "root": 82,
+      "lo": 82,
+      "hi": 82,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "5797976548783856e3bbc6641aff98c4f40a885906d05016999054e3495e4bff",
+      "bytes": 42063
+    },
+    {
+      "file": "zones/n83-v1-r1.flac",
+      "root": 83,
+      "lo": 83,
+      "hi": 83,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "3b978700fc7aa7fbb57e965217dcfe1be8bfed2441f7cd57d2732e0a6554f149",
+      "bytes": 33084
+    },
+    {
+      "file": "zones/n84-v1-r1.flac",
+      "root": 84,
+      "lo": 84,
+      "hi": 88,
+      "velLo": 1,
+      "velHi": 127,
+      "sha256": "4cb88307395b0cee91296d0b19dc89fcd091c580a6295a3e8d64be8f24a61524",
+      "bytes": 30471
+    }
+  ]
+}
