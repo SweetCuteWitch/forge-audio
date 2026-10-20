@@ -358,6 +358,7 @@ function validateCells(cells, ch, profile) {
     const hold = holdChar(c);
     if (hold !== null) {
       if (hold === '-') return;
+      if (ch.role === 'drums') throw new Error(`${where}: у барабанного удара нет длящейся ноты — «<<», «>>» и «~~» в барабанах не бывают`);
       if (profile !== 'studio') throw new Error(`${where}: ${SHAPE_STUDIO_ONLY}`);
       if (!sounding) throw new Error(`${where}: пометка формы не продолжает никакую ноту`);
       if (hold === '~') {
@@ -439,12 +440,17 @@ function notesToRow(notes, total) {
     const holds = fitHolds(n);
     for (let i = 1; i < n.len && n.start + i < total; i++) cells[n.start + i] = holds[i - 1].repeat(2);
   }
-  for (let i = 0; i < total; i++) {
+  return demoteSlurs(cells).join('');
+}
+
+/** Turns every `~~` that no note follows right after into `--`, in place; returns the cells. */
+function demoteSlurs(cells) {
+  for (let i = 0; i < cells.length; i++) {
     if (cells[i] !== '~~') continue;
-    const next = i + 1 < total ? { mod: cells[i + 1][0], value: cells[i + 1][1] } : null;
+    const next = i + 1 < cells.length ? { mod: cells[i + 1][0], value: cells[i + 1][1] } : null;
     if (!next || next.value === '.' || holdChar(next) !== null) cells[i] = '--';
   }
-  return cells.join('');
+  return cells;
 }
 
 /** Whether any lane of the track holds a note-shape mark (`<<` `>>` `~~`). */
@@ -1047,9 +1053,10 @@ function fitRows() {
   for (const c of tune.channels) {
     const total = totalSteps(tune, c);
     setLanes(c, channelLanes(c).map((row) => {
+      // a cut can leave a slur with no note after it: it becomes a plain hold
       const cells = cellStrings(row).slice(0, total);
       while (cells.length < total) cells.push('..');
-      return cells.join('');
+      return demoteSlurs(cells).join('');
     }));
   }
   if (tune.sections.length === 1 && tune.sections[0].from === 0) tune.sections[0].bars = tune.bars;
