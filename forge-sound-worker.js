@@ -1,4 +1,4 @@
-// source-hash: 433ffbbafb87e6d19caddcbb917021645ef817141407edf398201a27d159371b
+// source-hash: f7995e1001f5c8b32bba7479862f1db0ec22ac243299d5486abad59d084d7119
 // src/sound/dsp.ts
 var dbToGain = (db) => 10 ** (db / 20);
 var gainToDb = (gain) => 20 * Math.log10(Math.max(gain, 1e-9));
@@ -706,6 +706,39 @@ var RENDERERS = {
 function renderNote(id, target, offset, job) {
   RENDERERS[id](target, offset, job);
 }
+function noteSamples(id, job) {
+  const rate = job.sampleRate;
+  switch (id) {
+    case "lead":
+      return total(job, 0.14);
+    case "bass":
+      return total(job, 0.08);
+    case "pad":
+      return total(job, 1.1);
+    case "strings":
+      return total(job, 0.45);
+    case "brass":
+      return total(job, 0.12);
+    case "flute":
+      return total(job, 0.15);
+    case "organ":
+      return total(job, 0.05);
+    case "epiano":
+      return total(job, 0.25) + Math.round(1.2 * rate);
+    case "bell":
+      return Math.round(rate * 4.5 * (1 + Math.min(2, job.samples / rate) * 0.5));
+    case "pluck":
+      return Math.round(Math.min(2 * 1.1, 4) * rate);
+    case "harp":
+      return Math.round(Math.min(3.2 * 1.1, 4) * rate);
+    case "marimba": {
+      const life = 0.5 * (1 - 0.6 * Math.min(1, job.freq / 2e3));
+      return Math.round(rate * life * 6);
+    }
+    case "sampler":
+      return total(job, 0.08);
+  }
+}
 function isInstrument(id) {
   return id in INSTRUMENTS;
 }
@@ -806,7 +839,7 @@ var STUDIO_DRUM_TAIL = {
 };
 
 // src/web/protocol.ts
-var BUNDLE_VERSION = true ? "433ffbba 2026-10-20" : "dev";
+var BUNDLE_VERSION = true ? "f7995e10 2026-10-20" : "dev";
 var DEFAULT_SAMPLE_BASE_URL = "https://raw.githubusercontent.com/SweetCuteWitch/forge-audio/main/samples/";
 function synthList() {
   return Object.entries(INSTRUMENTS).filter(([id]) => id !== "sampler").map(([id, i]) => ({ id, low: i.low, high: i.high, role: i.role, description: i.description }));
@@ -1946,9 +1979,8 @@ function studioLength(tune, options = {}) {
   return { body, total: body + Math.round(tailSeconds * rate) };
 }
 var LEGATO_SKIP_S = 0.08;
-var SYNTH_TAIL_S = 10;
 var RING_CAP_S = 8;
-function voicesOf(plans, stepSamples) {
+function voicesOf(plans, stepSamples, fadeN) {
   const voices = /* @__PURE__ */ new Map();
   for (let i = 0; i < plans.length; i++) {
     const first = plans[i];
@@ -1960,7 +1992,7 @@ function voicesOf(plans, stepSamples) {
     const own = Math.max(1, Math.round((last.note.stepIndex + last.note.steps) * stepSamples) - base);
     let curve = null;
     if (plans.slice(i, j + 1).some((p) => p.curve !== null)) {
-      const lastLength = last.curve ? last.curve.length : 1;
+      const lastLength = Math.max(last.curve ? last.curve.length : 1, j > i ? fadeN + 1 : 1);
       curve = new Float32Array(last.start - base + lastLength).fill(1);
       for (let k = i; k <= j; k++) {
         const p = plans[k];
@@ -1968,6 +2000,15 @@ function voicesOf(plans, stepSamples) {
         const from = p.start - base;
         const to = k < j ? plans[k + 1].start - base : curve.length;
         for (let x = from; x < to; x++) curve[x] = p.curve[Math.min(x - from, p.curve.length - 1)];
+      }
+      for (let k = i + 1; k <= j; k++) {
+        const at = plans[k].start - base;
+        const from = curve[at - 1];
+        const end = Math.min(curve.length, at + fadeN);
+        for (let x = at; x < end; x++) {
+          const u = (x - at) / fadeN;
+          curve[x] = from + (curve[x] - from) * u;
+        }
       }
     }
     voices.set(i, { first, last, held, own, curve });
@@ -1993,7 +2034,8 @@ function quietVelocity(inst, midi) {
   if (layers.size < 2) return null;
   return Math.min(...pool.map((z) => z.velLo));
 }
-function crossfadeLayers(full, soft, curve, held) {
+var LAYER_BLOCK_S = 0.02;
+function crossfadeLayers(full, soft, curve, held, rate) {
   let ef = 0;
   let es = 0;
   for (let i = 0; i < held; i++) {
@@ -2001,17 +2043,36 @@ function crossfadeLayers(full, soft, curve, held) {
     es += soft[i] * soft[i];
   }
   const match = es > 0 ? Math.sqrt(ef / es) : 0;
+  const block = Math.max(1, Math.round(LAYER_BLOCK_S * rate));
+  const blocks = Math.ceil(full.length / block);
+  const gains = new Float64Array(blocks);
+  for (let b = 0; b < blocks; b++) {
+    let eFull = 0;
+    let eMix = 0;
+    const end = Math.min(full.length, (b + 1) * block);
+    for (let i = b * block; i < end; i++) {
+      const level = gainToDb(curve[Math.min(i, curve.length - 1)]);
+      const w = Math.min(1, Math.max(0, (level - SHAPE_FLOOR_DB) / -SHAPE_FLOOR_DB));
+      const mix = Math.sqrt(w) * full[i] + Math.sqrt(1 - w) * soft[i] * match;
+      eFull += full[i] * full[i];
+      eMix += mix * mix;
+      soft[i] = mix;
+    }
+    gains[b] = eFull > 0 && eMix > 0 ? Math.min(4, Math.max(0.25, Math.sqrt(eFull / eMix))) : 1;
+  }
   for (let i = 0; i < full.length; i++) {
-    const level = gainToDb(curve[Math.min(i, curve.length - 1)]);
-    const w = Math.min(1, Math.max(0, (level - SHAPE_FLOOR_DB) / -SHAPE_FLOOR_DB));
-    full[i] = Math.sqrt(w) * full[i] + Math.sqrt(1 - w) * soft[i] * match;
+    const p = (i + 0.5) / block - 0.5;
+    const b0 = Math.max(0, Math.min(blocks - 1, Math.floor(p)));
+    const b1 = Math.min(blocks - 1, b0 + 1);
+    const u = Math.max(0, Math.min(1, p - b0));
+    full[i] = soft[i] * (gains[b0] + (gains[b1] - gains[b0]) * u);
   }
 }
 function renderShapedNotes(ctx) {
   const { tune, channel, notes, rate, scratch, rng, humanize, instrument, sampled, sample } = ctx;
   const plans = planChannel(tune, channel, notes, rate);
-  const voices = voicesOf(plans, stepSeconds(tune, channel) * rate);
   const fadeN = Math.max(1, Math.round(LEGATO_FADE_S * rate));
+  const voices = voicesOf(plans, stepSeconds(tune, channel) * rate, fadeN);
   let rrIndex = 0;
   for (let pass = 0; pass < ctx.repeats; pass++) {
     const passOffset = pass * ctx.loopSeconds;
@@ -2105,16 +2166,13 @@ function renderShapedNotes(ctx) {
           const replay = () => k < drawn.length ? drawn[k++] : rng();
           const soft = new Float32Array(length);
           renderSampledHit(sampled, soft, 0, hitOf(quiet, quietZone, replay), rrIndex);
-          crossfadeLayers(body, soft, curve, Math.min(join, length));
+          crossfadeLayers(body, soft, curve, Math.min(join, length), rate);
         }
         rrIndex++;
       } else {
         const skipN = legatoIn ? Math.round(LEGATO_SKIP_S * rate) : 0;
         const releaseN = releaseMs === null || legatoOut ? 0 : Math.max(1, Math.round(releaseMs / 1e3 * rate));
-        const tail = legatoOut ? fadeN : releaseN > 0 ? releaseN : Math.round(SYNTH_TAIL_S * rate);
-        const length = Math.min(room, (legatoOut ? join : holdLen) + tail);
-        const raw = new Float32Array(length + skipN);
-        renderNote(instrument, raw, 0, {
+        const job = {
           freq: midiToFreq(midi),
           samples: Math.max(1, holdLen + releaseN + skipN),
           velocity,
@@ -2122,11 +2180,17 @@ function renderShapedNotes(ctx) {
           rng,
           sample,
           ...legatoIn ? { legato: true } : {}
-        });
+        };
+        const end = legatoOut ? join + fadeN : releaseN > 0 ? holdLen + releaseN : noteSamples(instrument, job) - skipN;
+        const length = Math.max(0, Math.min(room, end));
+        const raw = new Float32Array(length + skipN);
+        renderNote(instrument, raw, 0, job);
         body = skipN > 0 ? raw.subarray(skipN) : raw;
         if (releaseN > 0) for (let i = holdLen; i < length; i++) body[i] *= Math.max(0, 1 - (i - holdLen) / releaseN);
       }
-      for (let i = 0; i < body.length; i++) {
+      let used = body.length;
+      while (used > 0 && body[used - 1] === 0) used--;
+      for (let i = 0; i < used; i++) {
         let g = curve ? curve[Math.min(i, curve.length - 1)] : 1;
         if (i < attackN) g *= i / attackN;
         if (legatoIn && i < fadeN) g *= Math.sin(Math.PI / 2 * (i / fadeN));
