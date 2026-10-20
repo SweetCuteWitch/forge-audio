@@ -40,6 +40,10 @@ header h1 { font-size: 15px; margin: 0 10px 0 0; letter-spacing: .5px; }
 header h1 span { color: var(--accent); }
 .sep { width: 1px; height: 22px; background: var(--line); margin: 0 4px; }
 #time { font-family: var(--mono); min-width: 120px; color: var(--dim); }
+#progress { display: none; align-items: center; gap: 6px; color: var(--dim); font-size: 12px; }
+#progress.show { display: flex; }
+#progress .bar { width: 110px; height: 6px; background: var(--bg); border: 1px solid var(--line); border-radius: 3px; overflow: hidden; }
+#progress .bar i { display: block; height: 100%; width: 0; background: var(--accent); }
 .grow { flex: 1; }
 header .mini { display: flex; align-items: center; gap: 6px; color: var(--dim); }
 header .mini input[type=range] { width: 90px; }
@@ -119,6 +123,7 @@ aside h2:first-child { margin-top: 0; }
   <button id="bLoop" class="on" title="Повторять по кругу">⟲ Цикл</button>
   <button id="bFollow" class="on" title="Прокручивать за курсором">⇥ Следить</button>
   <span id="time">0:00.0 / 0:00.0</span>
+  <div id="progress"><div class="bar"><i></i></div><span></span></div>
   <div class="sep"></div>
   <button id="bUndo" title="Ctrl+Z">↶</button>
   <button id="bRedo" title="Ctrl+Y">↷</button>
@@ -141,6 +146,7 @@ aside h2:first-child { margin-top: 0; }
     <h2 id="chanTitle">Канал</h2>
     <div class="form" id="chanForm"></div>
     <p class="hint">Строки пишутся ступенями лада, поэтому тоника, лад и октава канала сдвигают все его ноты сразу.</p>
+    <p class="hint" id="engine"></p>
   </aside>
   <section id="editor">
     <div id="rollWrap">
@@ -195,7 +201,9 @@ aside h2:first-child { margin-top: 0; }
   .mid: ноты встают на сетку 1/16 (или 1/8), лад подбирается сам, аккорды раскладываются
   по голосам канала (лишние сверх четырёх отбрасываются), а нахлёст в шаг или меньше считается легато.</p>
   <p>Звук синтезируется тем же способом, что в <code>tune render</code> (пульсы, треугольник,
-  шум NES). Трек с профилем studio здесь звучит чиптюн-приближением.</p>
+  шум NES). Трек с профилем studio играет сам рендерер Forge — инструменты, эффекты и мастер,
+  как <code>tune render</code>: при первом «Играть» он скачивает нужные сэмплы и считает каналы,
+  дальше пересчитывает только изменённые.</p>
   <p style="text-align:right"><button id="bHelpClose">Понятно</button></p>
 </div></div>
 
@@ -274,7 +282,7 @@ function parseTune(input) {
     // A string is one lane, an array holds several; a single lane is always kept as a string.
     setLanes(out, Array.isArray(ch.steps) ? (ch.steps.length ? ch.steps.map(String) : ['']) : [String(ch.steps ?? '')]);
     // Studio fields are carried through untouched, so a studio track survives a round trip.
-    for (const key of ['instrument', 'fx', 'humanize', 'sample']) if (ch[key] !== undefined) out[key] = ch[key];
+    for (const key of ['instrument', 'fx', 'humanize', 'dynamics', 'sample']) if (ch[key] !== undefined) out[key] = ch[key];
     return out;
   });
   const sections = (Array.isArray(data.sections) ? data.sections : []).map((s) => ({
@@ -282,7 +290,8 @@ function parseTune(input) {
   const tune = {
     format: TUNE_FORMAT, name: String(data.name ?? ''), brief: String(data.brief ?? ''),
     tempo: Number(data.tempo ?? 120), meter: [Number(meter[0] ?? 4), Number(meter[1] ?? 4)],
-    key: String(data.key ?? 'c'), scale: data.scale ?? 'major', profile: data.profile ?? 'nes', bars,
+    key: String(data.key ?? 'c'), scale: data.scale ?? 'major', profile: data.profile ?? 'nes',
+    ...(data.loop !== undefined ? { loop: data.loop === true } : {}), bars,
     sections: sections.length ? sections : [{ name: 'A', from: 0, bars }], channels,
   };
   if (data.master !== undefined) tune.master = data.master;
@@ -996,18 +1005,25 @@ function getMix() {
 
 function position() {
   if (!player.playing) return player.cursor;
-  const d = mix ? mix.seconds : tuneSeconds(tune);
+  const m = mix ?? player.mix;
+  const d = m ? (player.loop && m.loopEnd ? m.loopEnd : m.seconds) : tuneSeconds(tune);
   let p = actx.currentTime - player.t0 + player.offset;
   if (player.loop) p %= d;
   return Math.min(p, d);
 }
 
 function play(from = player.cursor) {
-  const m = getMix();
+  if (isStudio()) { playStudio(from); return; }
+  startSource(getMix(), from);
+}
+
+/** Plays a rendered mix from `from`; a studio mix loops over its bars only, without the tail. */
+function startSource(m, from) {
   stopSource();
   const src = actx.createBufferSource();
   src.buffer = m.buf;
   src.loop = player.loop;
+  if (m.loopEnd) { src.loopStart = 0; src.loopEnd = m.loopEnd; }
   src.connect(master);
   from = Math.max(0, Math.min(from, m.seconds - 0.001));
   src.start(0, from);
@@ -1015,7 +1031,7 @@ function play(from = player.cursor) {
     if (player.src !== src) return;
     player.playing = false; player.src = null; player.cursor = 0; updateTransport();
   };
-  Object.assign(player, { src, playing: true, t0: actx.currentTime, offset: from });
+  Object.assign(player, { src, mix: m, playing: true, t0: actx.currentTime, offset: from });
   updateTransport();
   requestAnimationFrame(tick);
 }
@@ -1031,12 +1047,15 @@ let restartTimer = 0;
 /** The document changed: drop the rendered mix and, when playing, restart from where we are. */
 function invalidateMix() {
   mix = null;
+  // A studio track tells the worker and keeps playing; the next Play renders what changed.
+  if (isStudio()) { studioSync().catch((err) => toast(`Studio: ${err.message}`)); return; }
   if (!player.playing) return;
   clearTimeout(restartTimer);
   restartTimer = setTimeout(() => { if (player.playing) play(position()); }, 90);
 }
 
 function previewNote(channel, note) {
+  if (isStudio()) { studioPreview(channel, note); return; }
   const a = audio();
   const sec = Math.min(0.5, stepSeconds(tune, channel) * Math.max(1, note.steps));
   const len = Math.round((note.drum ? 0.6 : sec + channel.envelope.release / 1000) * SR);
@@ -1048,6 +1067,209 @@ function previewNote(channel, note) {
   src.buffer = buf;
   src.connect(master);
   src.start();
+}
+
+/* ───────────────────────── Studio: Forge's renderer in a worker ───────────────────────── */
+
+const isStudio = () => tune.profile === 'studio';
+
+/** Samples come from this server when the page runs locally, from the published repository otherwise. */
+const SAMPLE_BASE = /^(localhost|127\.0\.0\.1)$/.test(location.hostname)
+  ? new URL('samples/', location.href).href
+  : 'https://raw.githubusercontent.com/SweetCuteWitch/forge-audio/main/samples/';
+
+/** forge-sound-worker.js (built by `npm run page:bundle` in Forge); it answers messages strictly in order. */
+const studio = {
+  worker: null, nextId: 1, pending: new Map(),
+  sentDoc: null, sentAudible: null,
+  call(msg, onProgress) {
+    if (!this.worker) {
+      this.worker = new Worker('forge-sound-worker.js', { type: 'module' });
+      this.worker.onmessage = (e) => this.receive(e.data);
+      this.worker.onerror = (e) => {
+        e.preventDefault();
+        const err = new Error(`звуковой движок не запустился${e.message ? `: ${e.message}` : ''}`);
+        for (const p of this.pending.values()) p.reject(err);
+        this.pending.clear();
+        // a dead worker answers nothing: the next call starts a new one and resends everything
+        this.worker.terminate();
+        this.worker = null;
+        this.sentDoc = this.sentAudible = null;
+      };
+      this.worker.postMessage({ id: this.nextId++, type: 'init', baseUrl: SAMPLE_BASE });
+    }
+    const id = this.nextId++;
+    return new Promise((resolve, reject) => {
+      this.pending.set(id, { resolve, reject, onProgress });
+      this.worker.postMessage({ id, ...msg });
+    });
+  },
+  receive(msg) {
+    const p = this.pending.get(msg.id);
+    if (!p) return;
+    if (msg.type === 'progress') { p.onProgress?.(msg.progress); return; }
+    this.pending.delete(msg.id);
+    if (msg.type === 'done') p.resolve(msg.result); else p.reject(new Error(msg.message));
+  },
+  update(doc) { return this.call({ type: 'update', tune: doc }); },
+  audible(names) { return this.call({ type: 'audible', names }); },
+  render(onProgress) { return this.call({ type: 'render' }, onProgress); },
+  preview(channel, cell) { return this.call({ type: 'preview', channel, cell }); },
+  synths() { return this.call({ type: 'synths' }); },
+};
+
+/** Names of the channels that sound, or null when all of them do. */
+function audibleNames() {
+  if (!muted.size && !soloed.size) return null;
+  return tune.channels.filter((_, i) => audible(i)).map((c) => c.name);
+}
+/** What a studio mix was rendered from: the document and the channels heard. */
+const studioKey = () => `${snapshot()}\n${JSON.stringify(audibleNames())}`;
+
+/** Sends the worker the document and the audible channels, if they changed since the last send. */
+function studioSync() {
+  const jobs = [];
+  const doc = snapshot();
+  if (doc !== studio.sentDoc) {
+    studio.sentDoc = doc;
+    jobs.push(studio.update(tune).catch((err) => { studio.sentDoc = null; throw err; }));
+  }
+  const names = JSON.stringify(audibleNames());
+  if (names !== studio.sentAudible) {
+    studio.sentAudible = names;
+    jobs.push(studio.audible(JSON.parse(names)).catch((err) => { studio.sentAudible = null; throw err; }));
+  }
+  return Promise.all(jobs);
+}
+
+function showProgress(p) {
+  const label = p.phase === 'download' ? `Скачиваю ${p.label}`
+    : p.phase === 'render' ? `Считаю канал ${Math.min(p.done + 1, p.total)} из ${p.total}` : 'Свожу';
+  $('progress').classList.add('show');
+  $('progress').querySelector('span').textContent = label;
+  $('progress').querySelector('i').style.width = `${p.total ? Math.round((100 * p.done) / p.total) : 0}%`;
+}
+
+let studioBusy = false;
+/** Runs one studio render (for Play or for a WAV) with Play disabled and the progress bar shown. */
+async function studioJob(job) {
+  if (studioBusy) return null;
+  studioBusy = true;
+  $('bPlay').disabled = true;
+  try {
+    return await job();
+  } catch (err) {
+    toast(`Не сыграло: ${err.message}`);
+    return null;
+  } finally {
+    studioBusy = false;
+    $('bPlay').disabled = false;
+    $('progress').classList.remove('show');
+  }
+}
+
+/** Renders what the worker holds; studioRender() first sends it the current document and mutes. */
+async function studioRenderSent() {
+  const r = await studio.render(showProgress);
+  if (r.warnings.length) toast(r.warnings.join(' · '));
+  return r;
+}
+async function studioRender() {
+  await studioSync();
+  return studioRenderSent();
+}
+
+/** Play on a studio track: renders on the worker when the mix is stale, then plays. */
+async function playStudio(from) {
+  if (mix && mix.key !== studioKey()) mix = null;
+  if (mix) { startSource(mix, from); return; }
+  const key = studioKey();
+  const r = await studioJob(studioRender);
+  if (!r || !isStudio()) return;
+  const buf = audio().createBuffer(2, r.left.length, r.sampleRate);
+  buf.copyToChannel(r.left, 0);
+  buf.copyToChannel(r.right, 1);
+  mix = { buf, seconds: r.seconds, loopEnd: r.barsSeconds, key };
+  startSource(mix, from);
+}
+
+/** The whole studio track as a WAV: every channel, whatever is muted. */
+async function studioWav() {
+  const r = await studioJob(async () => {
+    await studioSync();
+    studio.sentAudible = 'null';
+    await studio.audible(null);
+    return studioRenderSent();
+  });
+  if (r) download(encodeWav(r.left, r.right), `${fileBase()}.wav`, 'audio/wav');
+}
+
+/** A note on the channel's real instrument; while one preview is on its way only the latest request waits. */
+let previewBusy = false, previewNext = null;
+async function studioPreview(channel, note) {
+  if (previewBusy) { previewNext = [channel, note]; return; }
+  previewBusy = true;
+  try {
+    await studioSync();
+    const r = await studio.preview(channel.name, { midi: note.midi ?? null, drum: note.drum ?? null, steps: note.steps });
+    if (r.data.length) {
+      const a = audio(), buf = a.createBuffer(1, r.data.length, r.sampleRate);
+      buf.copyToChannel(r.data, 0);
+      const src = a.createBufferSource();
+      src.buffer = buf;
+      src.connect(master);
+      src.start();
+    }
+  } catch (err) {
+    toast(`Нота не сыграла: ${err.message}`);
+  } finally {
+    previewBusy = false;
+    if (previewNext) { const [c, n] = previewNext; previewNext = null; studioPreview(c, n); }
+  }
+}
+
+const CATEGORY_LABELS = { bass: 'Бас', brass: 'Медные', drums: 'Ударные', guitar: 'Гитары', keys: 'Клавишные',
+  mallets: 'Мелодическая перкуссия', strings: 'Струнные', voices: 'Голоса', woodwinds: 'Деревянные духовые' };
+
+/** The instrument picker's lists — the sample catalogue and the worker's synths — loaded once. */
+let studioLists = null, studioListsLoading = false;
+async function loadStudioLists() {
+  if (studioLists || studioListsLoading) return;
+  studioListsLoading = true;
+  const lists = { version: '', synths: [], sampled: [] };
+  try {
+    const s = await studio.synths();
+    lists.version = s.version;
+    lists.synths = s.synths;
+  } catch (err) { toast(`Studio: ${err.message}`); }
+  try {
+    const res = await fetch(`${SAMPLE_BASE}catalog.json`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    lists.sampled = (await res.json()).instruments;
+  } catch (err) { toast(`Каталог инструментов не загрузился: ${err.message}`); }
+  studioLists = lists;
+  $('engine').textContent = lists.version ? `Studio-звук: forge-sound-worker ${lists.version}` : '';
+  if (!$('chanForm').contains(document.activeElement)) buildChanForm();
+}
+
+const isSynth = (id) => !!studioLists?.synths.some((s) => s.id === id);
+const midiRange = (i) => `${midiName(i.low)}–${midiName(i.high)}`;
+
+/** The «Инструмент» options: catalogue categories, then the synths; an id the lists lack is kept as it is. */
+function instrumentOptions(current = '') {
+  const L = studioLists ?? { synths: [], sampled: [] };
+  const opt = (id, text, title = '') =>
+    `<option value="${esc(id)}"${id === current ? ' selected' : ''}${title ? ` title="${esc(title)}"` : ''}>${esc(text)}</option>`;
+  const groups = new Map();
+  for (const i of L.sampled) {
+    if (!groups.has(i.category)) groups.set(i.category, []);
+    groups.get(i.category).push(opt(i.id, `${i.id} · ${midiRange(i)}`, `${i.name}: ${i.description}`));
+  }
+  let html = opt('', '— по роли канала');
+  for (const [cat, list] of groups) html += `<optgroup label="${esc(CATEGORY_LABELS[cat] ?? cat)}">${list.join('')}</optgroup>`;
+  if (L.synths.length) html += `<optgroup label="Синтезаторы">${L.synths.map((s) => opt(s.id, `${s.id} · ${midiRange(s)}`, s.description)).join('')}</optgroup>`;
+  if (current && !L.sampled.some((i) => i.id === current) && !isSynth(current)) html += opt(current, `${current} (нет в библиотеке)`);
+  return html;
 }
 
 function tick() {
@@ -1485,14 +1707,14 @@ function buildTrackForm() {
     <label>Размер</label><div class="row2"><input type="number" data-t="beats" min="1" max="16" value="${tune.meter[0]}" style="width:52px">/
       <select data-t="unit">${opts(['2', '4', '8'], String(tune.meter[1]))}</select></div>
     <label>Тактов</label><input type="number" data-t="bars" min="1" max="512" value="${tune.bars}">
-    <label>Профиль</label><select data-t="profile">${opts(['nes', 'free', 'studio'], tune.profile, { nes: 'nes — 2 пульса, треугольник, шум', free: 'free — без ограничений, панорама', studio: 'studio (звучит приближённо)' })}</select>`;
+    <label>Профиль</label><select data-t="profile">${opts(['nes', 'free', 'studio'], tune.profile, { nes: 'nes — 2 пульса, треугольник, шум', free: 'free — без ограничений, панорама', studio: 'studio — инструменты и мастер' })}</select>`;
 }
 
 function buildChannels() {
   $('channels').innerHTML = tune.channels.map((c, i) => `
     <div class="chan${i === active ? ' active' : ''}" data-i="${i}">
       <span class="sw" style="background:${COLORS[i % COLORS.length]}"></span>
-      <span class="nm">${esc(c.name)} <small>${esc(c.role === 'drums' ? 'барабаны' : c.voice)}${channelLanes(c).length > 1 ? ` · ${channelLanes(c).length} ${channelLanes(c).length < 5 ? 'голоса' : 'голосов'}` : ''}</small></span>
+      <span class="nm">${esc(c.name)} <small>${esc(isStudio() && c.instrument ? c.instrument : c.role === 'drums' ? 'барабаны' : c.voice)}${channelLanes(c).length > 1 ? ` · ${channelLanes(c).length} ${channelLanes(c).length < 5 ? 'голоса' : 'голосов'}` : ''}</small></span>
       <button class="m${muted.has(i) ? ' on' : ''}" data-act="mute" title="Заглушить">M</button>
       <button class="s${soloed.has(i) ? ' on' : ''}" data-act="solo" title="Соло">S</button>
       <button data-act="del" title="Удалить канал">×</button>
@@ -1518,7 +1740,16 @@ function buildChanForm() {
     <label>Спад, мс</label><input type="number" data-e="decay" min="0" max="2000" value="${env.decay}">
     <label>Сустейн</label><input type="number" data-e="sustain" min="0" max="1" step="0.05" value="${env.sustain}">
     <label>Затухание, мс</label><input type="number" data-e="release" min="0" max="3000" value="${env.release}">`}
-    ${c.instrument ? `<label>Инструмент</label><span class="hint">${esc(c.instrument)} (studio)</span>` : ''}`;
+    ${isStudio() ? studioFields(c) : c.instrument ? `<label>Инструмент</label><span class="hint">${esc(c.instrument)} (studio)</span>` : ''}`;
+  if (isStudio()) loadStudioLists();
+}
+
+/** A studio channel's instrument and, for a sampled one, how hard it is played. */
+function studioFields(c) {
+  const sampled = !!c.instrument && studioLists !== null && !isSynth(c.instrument);
+  const dyn = c.dynamics ?? 0.6;
+  return `<label>Инструмент</label><select data-c="instrument">${instrumentOptions(c.instrument ?? '')}</select>
+    ${sampled ? `<label>Динамика <b id="dynV">${dyn.toFixed(2)}</b></label><input type="range" data-c="dynamics" min="0" max="1" step="0.05" value="${dyn}">` : ''}`;
 }
 
 function buildBottom() {
@@ -1570,9 +1801,9 @@ function applyTrackField(field, value, final) {
 function applyChanField(field, value, final) {
   const c = ch();
   if (field === 'name') { const v = value.trim().replace(/\s+/g, '-'); if (v) c.name = v; if (final) changed(); else buildChannels(); return; }
-  if (field === 'volume' || field === 'pan') {
+  if (field === 'volume' || field === 'pan' || field === 'dynamics') {
     c[field] = Number(value);
-    $(field === 'volume' ? 'volV' : 'panV').textContent = Number(value).toFixed(2);
+    $({ volume: 'volV', pan: 'panV', dynamics: 'dynV' }[field]).textContent = Number(value).toFixed(2);
     invalidateMix();
     if (final) changed();
     return;
@@ -1587,10 +1818,12 @@ function applyChanField(field, value, final) {
       c.voice = toDrums ? 'noise' : value === 'bass' ? 'triangle' : 'pulse25';
     }
   } else if (field === 'voice') c.voice = value;
+  else if (field === 'instrument') { if (value) c.instrument = value; else delete c.instrument; }
   else if (field === 'step') resampleStep(c, value);
   else if (field === 'octave') { const v = Math.round(Number(value)); if (v >= 0 && v <= 8) c.octave = v; }
   invalidateMix();
   changed();
+  if (field === 'instrument') buildChanForm(); // the select keeps focus; the dynamics slider comes and goes with it
 }
 
 function wireForm(root, attr, apply) {
@@ -1738,6 +1971,7 @@ const fileBase = () => (tune.name || 'track').replace(/[^\w.-]+/g, '-');
 $('bSaveTune').addEventListener('click', () => download(`${JSON.stringify(tune, null, 2)}\n`, `${fileBase()}.tune.json`, 'application/json'));
 $('bSaveMidi').addEventListener('click', () => download(encodeMidi(tune), `${fileBase()}.mid`, 'audio/midi'));
 $('bSaveWav').addEventListener('click', () => {
+  if (isStudio()) { studioWav(); return; }
   const r = renderMix(tune);
   download(encodeWav(r.left, r.right), `${fileBase()}.wav`, 'audio/wav');
 });
