@@ -1,0 +1,322 @@
+{
+  "format": "forge/instrument@1",
+  "id": "concert-marimba",
+  "name": "Concert marimba",
+  "category": "mallets",
+  "description": "a concert marimba with yarn mallets, three dynamics (soft, medium, loud), in stereo",
+  "role": "melody",
+  "low": 41,
+  "high": 96,
+  "gm": 12,
+  "release": 0.3,
+  "sustain": false,
+  "licence": {
+    "name": "CC0-1.0",
+    "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "author": "Versilian Studios (Versilian Community Sample Library)",
+    "source": "https://github.com/sgossner/VCSL",
+    "attribution": "Marimba from the Versilian Community Sample Library by Versilian Studios (CC0; credit encouraged, not required)"
+  },
+  "zones": [
+    {
+      "file": "zones/n41-v1-r1.flac",
+      "root": 41,
+      "lo": 41,
+      "hi": 44,
+      "velLo": 1,
+      "velHi": 42,
+      "sha256": "44f9caed5d3fc941121f05ddac416f121aae835150a342279ef8f4ab69380390",
+      "bytes": 32508
+    },
+    {
+      "file": "zones/n41-v2-r1.flac",
+      "root": 41,
+      "lo": 41,
+      "hi": 44,
+      "velLo": 43,
+      "velHi": 105,
+      "sha256": "abc9ccbce13d5b9153610afea00a5b108bf542a4346674ef50d3d8960b78cb22",
+      "bytes": 61543
+    },
+    {
+      "file": "zones/n41-v3-r1.flac",
+      "root": 41,
+      "lo": 41,
+      "hi": 44,
+      "velLo": 106,
+      "velHi": 127,
+      "sha256": "d2c319ba8ed1d135a27797d76aea16bbe03642570c98f050fcf5c96b5e650081",
+      "bytes": 76442
+    },
+    {
+      "file": "zones/n48-v1-r1.flac",
+      "root": 48,
+      "lo": 45,
+      "hi": 51,
+      "velLo": 1,
+      "velHi": 42,
+      "sha256": "252a4b417e50cd83b8d9fb3e1cf70f8ec8a7a148b8f6adfca0041c2b44826461",
+      "bytes": 55142
+    },
+    {
+      "file": "zones/n48-v2-r1.flac",
+      "root": 48,
+      "lo": 45,
+      "hi": 51,
+      "velLo": 43,
+      "velHi": 105,
+      "sha256": "af265f001252e1168eb642423b95156551cb4930817f53a218136a5932998064",
+      "bytes": 82784
+    },
+    {
+      "file": "zones/n48-v3-r1.flac",
+      "root": 48,
+      "lo": 45,
+      "hi": 51,
+      "velLo": 106,
+      "velHi": 127,
+      "sha256": "5281f5676297db2a2e24dacc21b51724884b38c088c27b50749e025c48bbf3fe",
+      "bytes": 95268
+    },
+    {
+      "file": "zones/n55-v1-r1.flac",
+      "root": 55,
+      "lo": 52,
+      "hi": 57,
+      "velLo": 1,
+      "velHi": 42,
+      "sha256": "9a99294a05cd340cd0d8843eee4cb51f1ec795572e883b966b62b7390392c8f9",
+      "bytes": 40001
+    },
+    {
+      "file": "zones/n55-v2-r1.flac",
+      "root": 55,
+      "lo": 52,
+      "hi": 57,
+      "velLo": 43,
+      "velHi": 105,
+      "sha256": "538cdef5deed282d5e598d4f765ba88ef7cb9887cb921cd2d98af64dcf5e7008",
+      "bytes": 66703
+    },
+    {
+      "file": "zones/n55-v3-r1.flac",
+      "root": 55,
+      "lo": 52,
+      "hi": 57,
+      "velLo": 106,
+      "velHi": 127,
+      "sha256": "c2bafebf6927339f4f4d3efbca4494c5efa3094d6c3bde611a4c98ec506a1b8c",
+      "bytes": 91828
+    },
+    {
+      "file": "zones/n59-v1-r1.flac",
+      "root": 59,
+      "lo": 58,
+      "hi": 62,
+      "velLo": 1,
+      "velHi": 42,
+      "sha256": "445eb49341a5f9fbf8fb2abd2c6b2207feec446779675dfaeb5482fa6cd09d85",
+      "bytes": 35763
+    },
+    {
+      "file": "zones/n59-v2-r1.flac",
+      "root": 59,
+      "lo": 58,
+      "hi": 62,
+      "velLo": 43,
+      "velHi": 105,
+      "sha256": "1eedb325ce4f99bdb69b88a62a330ff4d09ddce9255e8775c4e2a2afd4ca4bf5",
+      "bytes": 58271
+    },
+    {
+      "file": "zones/n59-v3-r1.flac",
+      "root": 59,
+      "lo": 58,
+      "hi": 62,
+      "velLo": 106,
+      "velHi": 127,
+      "sha256": "3699b1619ea4608ae0698eaa8cbffaab5c7c75d2a3aecde75a433331dde6f1e7",
+      "bytes": 79234
+    },
+    {
+      "file": "zones/n65-v1-r1.flac",
+      "root": 65,
+      "lo": 63,
+      "hi": 68,
+      "velLo": 1,
+      "velHi": 42,
+      "sha256": "80b5ed5a7d93db7eeb26b5db5386c6ca6ac24f8b34b2f716fe2ae652093609ca",
+      "bytes": 42508
+    },
+    {
+      "file": "zones/n65-v2-r1.flac",
+      "root": 65,
+      "lo": 63,
+      "hi": 68,
+      "velLo": 43,
+      "velHi": 105,
+      "sha256": "399a4ae3cf19b02236ae5388c1f4b99746e65d588614b3e43772f067617661fc",
+      "bytes": 52084
+    },
+    {
+      "file": "zones/n65-v3-r1.flac",
+      "root": 65,
+      "lo": 63,
+      "hi": 68,
+      "velLo": 106,
+      "velHi": 127,
+      "sha256": "6b8caabdf3962f7c078b499c9e99ab1eb38eb41cc2d035b5694c72c6970eab46",
+      "bytes": 76056
+    },
+    {
+      "file": "zones/n72-v1-r1.flac",
+      "root": 72,
+      "lo": 69,
+      "hi": 75,
+      "velLo": 1,
+      "velHi": 42,
+      "sha256": "c866980273e4d02a5dbae4ac1ced34ab6eb18c57afdb9994fd5391f2d28d8b28",
+      "bytes": 26241
+    },
+    {
+      "file": "zones/n72-v2-r1.flac",
+      "root": 72,
+      "lo": 69,
+      "hi": 75,
+      "velLo": 43,
+      "velHi": 105,
+      "sha256": "89b336abb6a861e1b27e514733a0d7f49c363969c25763f4e480cc6423cebd0f",
+      "bytes": 41687
+    },
+    {
+      "file": "zones/n72-v3-r1.flac",
+      "root": 72,
+      "lo": 69,
+      "hi": 75,
+      "velLo": 106,
+      "velHi": 127,
+      "sha256": "f06b4ae0640450e24c9a4083200296ed17e27cc4ff9b6fffcae4567ae9d3a8f0",
+      "bytes": 57048
+    },
+    {
+      "file": "zones/n79-v1-r1.flac",
+      "root": 79,
+      "lo": 76,
+      "hi": 81,
+      "velLo": 1,
+      "velHi": 42,
+      "sha256": "ab319f404797e8def8473a53864e9a8a34b0594eedbcc9addd8866beac187d73",
+      "bytes": 18251
+    },
+    {
+      "file": "zones/n79-v2-r1.flac",
+      "root": 79,
+      "lo": 76,
+      "hi": 81,
+      "velLo": 43,
+      "velHi": 105,
+      "sha256": "455bc8fc72f9907e67e4b7770c23390e5ac08b8bf289f8031fab39df182e12c7",
+      "bytes": 25419
+    },
+    {
+      "file": "zones/n79-v3-r1.flac",
+      "root": 79,
+      "lo": 76,
+      "hi": 81,
+      "velLo": 106,
+      "velHi": 127,
+      "sha256": "d1506798ee5dc86438b594d8700e7933ac5e3da0b4946ea5788121b1c4612ff6",
+      "bytes": 36802
+    },
+    {
+      "file": "zones/n83-v1-r1.flac",
+      "root": 83,
+      "lo": 82,
+      "hi": 86,
+      "velLo": 1,
+      "velHi": 42,
+      "sha256": "9caecacf8302cd475676b93b9945418aff991827e1fe7dd1cb858519d98d27e2",
+      "bytes": 16262
+    },
+    {
+      "file": "zones/n83-v2-r1.flac",
+      "root": 83,
+      "lo": 82,
+      "hi": 86,
+      "velLo": 43,
+      "velHi": 105,
+      "sha256": "4c02e04f70f7ca2a000135de8128b446a8af1f955b14a56ee4295411bd758957",
+      "bytes": 27661
+    },
+    {
+      "file": "zones/n83-v3-r1.flac",
+      "root": 83,
+      "lo": 82,
+      "hi": 86,
+      "velLo": 106,
+      "velHi": 127,
+      "sha256": "9af1ea81c0d1b83df4d1e7d8fc204cf42112dacfd7a9eb413fbb89bfe50fd15d",
+      "bytes": 38644
+    },
+    {
+      "file": "zones/n89-v1-r1.flac",
+      "root": 89,
+      "lo": 87,
+      "hi": 92,
+      "velLo": 1,
+      "velHi": 42,
+      "sha256": "60bd12e2d0ef484be74ec7b94e7c2f707ba5c72cb26f9b4307d66c4273efaafc",
+      "bytes": 6461
+    },
+    {
+      "file": "zones/n89-v2-r1.flac",
+      "root": 89,
+      "lo": 87,
+      "hi": 92,
+      "velLo": 43,
+      "velHi": 105,
+      "sha256": "1df352f8cd0abf29ae1862958575ad026b29800b9d0fd01ed707befc304d47b2",
+      "bytes": 21700
+    },
+    {
+      "file": "zones/n89-v3-r1.flac",
+      "root": 89,
+      "lo": 87,
+      "hi": 92,
+      "velLo": 106,
+      "velHi": 127,
+      "sha256": "9ad8e068b8ced50f461fdef4cedf87a1ccfea38ee61d57065455ce6d6791922a",
+      "bytes": 34771
+    },
+    {
+      "file": "zones/n96-v1-r1.flac",
+      "root": 96,
+      "lo": 93,
+      "hi": 97,
+      "velLo": 1,
+      "velHi": 42,
+      "sha256": "5e3edc3dcd15fa58e320e65d5443b29ca397d07a3935fbd4e5f83c9340f22362",
+      "bytes": 10499
+    },
+    {
+      "file": "zones/n96-v2-r1.flac",
+      "root": 96,
+      "lo": 93,
+      "hi": 97,
+      "velLo": 43,
+      "velHi": 105,
+      "sha256": "3c0ff4de2ba5209d7c8a07bb8c8c4f280b7a7f5c71740b9952ac6a49372db029",
+      "bytes": 22564
+    },
+    {
+      "file": "zones/n96-v3-r1.flac",
+      "root": 96,
+      "lo": 93,
+      "hi": 97,
+      "velLo": 106,
+      "velHi": 127,
+      "sha256": "456fb767c5ff31878a740a5784e3875ccd9e44792d1a43d41653a676eddda001",
+      "bytes": 30271
+    }
+  ]
+}
