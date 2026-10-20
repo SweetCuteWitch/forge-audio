@@ -1151,6 +1151,8 @@ function showProgress(p) {
 }
 
 let studioBusy = false;
+/** Counts documents opened in place of the current one (a file, the demo); undo and redo do not count. */
+let loadCount = 0;
 /** Runs one studio render (for Play or for a WAV) with Play disabled and the progress bar shown. */
 async function studioJob(job) {
   if (studioBusy) return null;
@@ -1183,9 +1185,10 @@ async function studioRender() {
 async function playStudio(from) {
   if (mix && mix.key !== studioKey()) mix = null;
   if (mix) { startSource(mix, from); return; }
-  const key = studioKey();
+  const key = studioKey(), loaded = loadCount;
   const r = await studioJob(studioRender);
-  if (!r || !isStudio()) return;
+  // a render of a track that was replaced meanwhile is dropped
+  if (!r || !isStudio() || loaded !== loadCount) return;
   const buf = audio().createBuffer(2, r.left.length, r.sampleRate);
   buf.copyToChannel(r.left, 0);
   buf.copyToChannel(r.right, 1);
@@ -1231,24 +1234,24 @@ async function studioPreview(channel, note) {
 const CATEGORY_LABELS = { bass: 'Бас', brass: 'Медные', drums: 'Ударные', guitar: 'Гитары', keys: 'Клавишные',
   mallets: 'Мелодическая перкуссия', strings: 'Струнные', voices: 'Голоса', woodwinds: 'Деревянные духовые' };
 
-/** The instrument picker's lists — the sample catalogue and the worker's synths — loaded once. */
-let studioLists = null, studioListsLoading = false;
+/** The instrument picker's lists — the sample catalogue and the worker's synths — loaded once; a failure is retried 10 s later. */
+let studioLists = null, studioListsLoading = false, studioListsFailed = 0;
 async function loadStudioLists() {
-  if (studioLists || studioListsLoading) return;
+  if (studioLists || studioListsLoading || Date.now() - studioListsFailed < 10000) return;
   studioListsLoading = true;
-  const lists = { version: '', synths: [], sampled: [] };
   try {
     const s = await studio.synths();
-    lists.version = s.version;
-    lists.synths = s.synths;
-  } catch (err) { toast(`Studio: ${err.message}`); }
-  try {
     const res = await fetch(`${SAMPLE_BASE}catalog.json`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    lists.sampled = (await res.json()).instruments;
-  } catch (err) { toast(`Каталог инструментов не загрузился: ${err.message}`); }
-  studioLists = lists;
-  $('engine').textContent = lists.version ? `Studio-звук: forge-sound-worker ${lists.version}` : '';
+    if (!res.ok) throw new Error(`catalog.json: HTTP ${res.status}`);
+    studioLists = { version: s.version, synths: s.synths, sampled: (await res.json()).instruments };
+    $('engine').textContent = `Studio-звук: forge-sound-worker ${s.version}`;
+  } catch (err) {
+    studioListsFailed = Date.now();
+    toast(`Список инструментов не загрузился: ${err.message}`);
+    return;
+  } finally {
+    studioListsLoading = false;
+  }
   if (!$('chanForm').contains(document.activeElement)) buildChanForm();
 }
 
@@ -1268,7 +1271,7 @@ function instrumentOptions(current = '') {
   let html = opt('', '— по роли канала');
   for (const [cat, list] of groups) html += `<optgroup label="${esc(CATEGORY_LABELS[cat] ?? cat)}">${list.join('')}</optgroup>`;
   if (L.synths.length) html += `<optgroup label="Синтезаторы">${L.synths.map((s) => opt(s.id, `${s.id} · ${midiRange(s)}`, s.description)).join('')}</optgroup>`;
-  if (current && !L.sampled.some((i) => i.id === current) && !isSynth(current)) html += opt(current, `${current} (нет в библиотеке)`);
+  if (current && !L.sampled.some((i) => i.id === current) && !isSynth(current)) html += opt(current, studioLists ? `${current} (нет в библиотеке)` : current);
   return html;
 }
 
@@ -1984,9 +1987,11 @@ async function openFile(file) {
     if (/\.midi?$/i.test(file.name)) {
       const { tune: t, dropped } = midiToTune(new Uint8Array(await file.arrayBuffer()), file.name);
       tune = t;
+      loadCount++;
       toast(`MIDI: ${t.channels.length} канал(ов), ${t.key} ${SCALE_LABELS[t.scale]}, ${t.tempo} bpm${dropped ? ` · отброшено нот: ${dropped} (больше четырёх сразу или вне лада)` : ''}`);
     } else {
       tune = parseTune(await file.text());
+      loadCount++;
       toast(`Открыт «${tune.name || file.name}»`);
     }
     pushUndo(before);
@@ -2012,6 +2017,7 @@ window.addEventListener('drop', (e) => {
 $('bDemo').addEventListener('click', () => {
   const before = snapshot();
   tune = parseTune(DEMO);
+  loadCount++;
   pushUndo(before);
   active = 0; selected = null; muted.clear(); soloed.clear();
   invalidateMix(); changed(true); scrollToNotes();
