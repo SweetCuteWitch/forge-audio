@@ -7,3 +7,4 @@ Every instrument here is CC0, CC-BY or MIT. Using a CC-BY instrument in publishe
 | --- | --- | --- | --- | --- | --- |
 | `clean-guitar` | Clean electric guitar | https://freepats.zenvoid.org/ElectricGuitar/clean-electric-guitar.html | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | FreePats project (FSBS Electric Guitar Clean #1) | — |
 | `nylon-guitar` | Nylon guitar | https://freepats.zenvoid.org/Guitar/acoustic-guitar.html | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | roberto@zenvoid.org (FreePats project) | — |
+| `overdrive-guitar` | Overdriven electric guitar | https://freepats.zenvoid.org/ElectricGuitar/distorted-electric-guitar.html | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | FreePats project (FSBS Electric Guitar Distorted #2) | — |
