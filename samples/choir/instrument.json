@@ -6,7 +6,7 @@
   "description": "a mixed choir singing \"aah\" (FluidR3 Choir Aahs, as in MuseScore_General), in stereo",
   "role": "harmony",
   "low": 36,
-  "high": 96,
+  "high": 84,
   "gm": 52,
   "release": 0.3,
   "sustain": true,
@@ -37,10 +37,10 @@
       "hi": 42,
       "velLo": 1,
       "velHi": 127,
-      "loopStart": 29335,
-      "loopEnd": 99577,
-      "sha256": "04c55a981461fb78c5262d1b92d211067c11908ba78e4257b13ee65379ef7742",
-      "bytes": 214648
+      "loopStart": 37878,
+      "loopEnd": 66017,
+      "sha256": "c68c5bf6c76ce7b37f01a9cc699bff58cb212c4aaa1c0aa7a64a1ee77ef13eba",
+      "bytes": 141027
     },
     {
       "file": "zones/n45-v1-r1.flac",
@@ -109,10 +109,10 @@
       "hi": 60,
       "velLo": 1,
       "velHi": 127,
-      "loopStart": 42218,
-      "loopEnd": 74477,
-      "sha256": "5ee132392e413eb46b74127cbd4ab9605190a5fe6a2ba2036b6d5bb2c8fb4364",
-      "bytes": 161831
+      "loopStart": 39003,
+      "loopEnd": 68899,
+      "sha256": "1ddf2c6983e47bf0b5d3efc4c5b4cc232d0b4a4e448c89e4fbc46eedbab227c3",
+      "bytes": 149416
     },
     {
       "file": "zones/n63-v1-r1.flac",
@@ -133,10 +133,10 @@
       "hi": 66,
       "velLo": 1,
       "velHi": 127,
-      "loopStart": 45487,
-      "loopEnd": 78364,
-      "sha256": "201319f571ee46f421d04e707c9a257bd94a617eb42a81d174f40b53d484b351",
-      "bytes": 183040
+      "loopStart": 44381,
+      "loopEnd": 66777,
+      "sha256": "ecc47d6b0172da5189ac75614706775cab0ee13740aff16c6cee88e3a8bd4010",
+      "bytes": 155878
     },
     {
       "file": "zones/n69-v1-r1.flac",
@@ -145,10 +145,10 @@
       "hi": 69,
       "velLo": 1,
       "velHi": 127,
-      "loopStart": 29004,
-      "loopEnd": 107092,
-      "sha256": "43843874cba3bb8229cc1340a50585b228efbfd0db87fdae90f2289b6e539956",
-      "bytes": 228474
+      "loopStart": 44494,
+      "loopEnd": 69927,
+      "sha256": "19d3132f71f881666c5970de6cdaef8bb40f6689a380c9914a767426bea55f89",
+      "bytes": 147589
     },
     {
       "file": "zones/n72-v1-r1.flac",
@@ -169,10 +169,10 @@
       "hi": 75,
       "velLo": 1,
       "velHi": 127,
-      "loopStart": 31839,
-      "loopEnd": 99515,
-      "sha256": "1b71f5f987531ed5845863f8058bcfc104737c51b0c301b2ea782563c5a27546",
-      "bytes": 200780
+      "loopStart": 35063,
+      "loopEnd": 64651,
+      "sha256": "1a831dd3f81a5056608aa1204b6e4fa3d918f8b33cd731d048fa64d46956a8ea",
+      "bytes": 128643
     },
     {
       "file": "zones/n78-v1-r1.flac",
@@ -193,10 +193,10 @@
       "hi": 96,
       "velLo": 1,
       "velHi": 127,
-      "loopStart": 34047,
-      "loopEnd": 64008,
-      "sha256": "6798e18f7f91aa8aefd0d63c33903c750968df111d083ac8c1b149e66a1925af",
-      "bytes": 134186
+      "loopStart": 40834,
+      "loopEnd": 67642,
+      "sha256": "2a9367f748d656a4b5097eb13cb9d1f106bf705ccf33df3803af544a35808081",
+      "bytes": 142079
     }
   ]
 }
