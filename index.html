@@ -75,8 +75,11 @@ aside h2:first-child { margin-top: 0; }
   display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 12px; max-height: 38vh; overflow: auto; }
 #bottom h3 { margin: 0 0 4px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--dim);
   font-weight: 600; display: flex; gap: 8px; align-items: center; }
-#rowText { width: 100%; height: 92px; font-family: var(--mono); font-size: 12.5px; resize: vertical; }
-#rowMsg { font-size: 12px; min-height: 18px; }
+.lane { margin-bottom: 4px; }
+.lane label { font-size: 11px; display: block; margin-bottom: 1px; }
+.lane textarea { width: 100%; height: 92px; font-family: var(--mono); font-size: 12.5px; resize: vertical; display: block; }
+#rowLanes.many .lane textarea { height: 58px; }
+.lane .msg { font-size: 12px; min-height: 16px; }
 #cli { font-family: var(--mono); font-size: 11.5px; color: var(--dim); word-break: break-all;
   background: var(--bg); border: 1px solid var(--line); border-radius: 5px; padding: 4px 6px; }
 #grid { font-family: var(--mono); font-size: 11.5px; margin: 0; white-space: pre; overflow-x: auto;
@@ -146,9 +149,9 @@ aside h2:first-child { margin-top: 0; }
     </div>
     <div id="bottom">
       <div>
-        <h3>Строка канала <span id="rowName"></span></h3>
-        <textarea id="rowText" spellcheck="false" wrap="off"></textarea>
-        <div id="rowMsg"></div>
+        <h3>Строка канала <span id="rowName"></span>
+          <button id="bAddLane" style="font-size:11px;padding:0 6px" title="Ещё одна строка, звучащая одновременно с остальными (до четырёх)">+ голос</button></h3>
+        <div id="rowLanes"></div>
         <h3>Команда для npm run tune <button id="bCopy" style="font-size:11px;padding:0 6px">копировать</button></h3>
         <div id="cli"></div>
       </div>
@@ -177,17 +180,20 @@ aside h2:first-child { margin-top: 0; }
     <tr><td><kbd>Del</kbd></td><td>удалить выбранную ноту</td></tr>
     <tr><td><kbd>Ctrl+Z</kbd> / <kbd>Ctrl+Y</kbd></td><td>отменить / повторить</td></tr>
   </table>
-  <p>Каждый канал одноголосый, как в трекере: новая нота обрезает ту, что звучит.
+  <p>В канале до четырёх голосов — строк трекера, которые звучат одновременно, поэтому
+  ноты можно ставить друг над другом: аккорд. Голос для ноты выбирается сам (первый свободный
+  на всю её длину), его видно в строках внизу. Нота на той же высоте поверх звучащей заменяет её.
   Тёмные полосы — высоты, которые формат записать не может: ноты пишутся ступенями
   лада (<code>_</code> база, <code>^</code>/<code>v</code> октава вверх и вниз,
   <code>#</code>/<code>b</code> полутон только в базовой октаве). Акцент <code>&gt;</code>
   тоже бывает только в базовой октаве.</p>
-  <p>Строку канала можно править и текстом внизу: <code>_5--</code> нота с удержанием,
-  <code>..</code> пауза, <code>|</code> граница такта, барабаны <code>k s h o c p t r</code>.</p>
+  <p>Строки канала можно править и текстом внизу, по одной на голос: <code>_5--</code> нота с удержанием,
+  <code>..</code> пауза, <code>|</code> граница такта, барабаны <code>k s h o c p t r</code>.
+  «+ голос» добавляет пустую строку; пустой голос, кроме первого, исчезает.</p>
   <p>«⤓ .tune.json» сохраняет документ, который понимает <code>npm run tune</code>: его
   можно отдать агенту на <code>tune lint</code>, <code>render</code> и доработку. «Открыть» понимает и
-  .mid: ноты встают на сетку 1/16 (или 1/8), лад подбирается сам, аккорды
-  сводятся к одному голосу на канал.</p>
+  .mid: ноты встают на сетку 1/16 (или 1/8), лад подбирается сам, аккорды раскладываются
+  по голосам канала (лишние сверх четырёх отбрасываются), а нахлёст в шаг или меньше считается легато.</p>
   <p>Звук синтезируется тем же способом, что в <code>tune render</code> (пульсы, треугольник,
   шум NES). Трек с профилем studio здесь звучит чиптюн-приближением.</p>
   <p style="text-align:right"><button id="bHelpClose">Понятно</button></p>
@@ -263,8 +269,10 @@ function parseTune(input) {
     const out = createChannel(String(ch.name), {
       voice: ch.voice ?? 'pulse25', role: ch.role ?? 'melody', step: String(ch.step ?? '1/8'),
       octave: Number(ch.octave ?? 4), volume: Number(ch.volume ?? 0.8), pan: Number(ch.pan ?? 0),
-      envelope: { ...DEFAULT_ENVELOPE, ...(ch.envelope ?? {}) }, steps: String(ch.steps ?? ''),
+      envelope: { ...DEFAULT_ENVELOPE, ...(ch.envelope ?? {}) },
     });
+    // A string is one lane, an array holds several; a single lane is always kept as a string.
+    setLanes(out, Array.isArray(ch.steps) ? (ch.steps.length ? ch.steps.map(String) : ['']) : [String(ch.steps ?? '')]);
     // Studio fields are carried through untouched, so a studio track survives a round trip.
     for (const key of ['instrument', 'fx', 'humanize', 'sample']) if (ch[key] !== undefined) out[key] = ch[key];
     return out;
@@ -280,7 +288,7 @@ function parseTune(input) {
   if (data.master !== undefined) tune.master = data.master;
   parseRoot(tune.key);
   if (!SCALES[tune.scale]) throw new Error(`Неизвестный лад: ${tune.scale}`);
-  for (const ch of channels) validateCells(parseCells(ch.steps), ch);
+  for (const ch of channels) for (const row of channelLanes(ch)) validateCells(parseCells(row), ch);
   return tune;
 }
 
@@ -315,18 +323,36 @@ function validateCells(cells, ch) {
   });
 }
 
-/** A row as editable notes: `{start, len, mod, value}`, holds folded into `len`. */
-function rowNotes(ch) {
+/** The most lanes one channel may hold. */
+const MAX_LANES = 4;
+
+/** The rows of a channel: a string is one lane, an array is a copy, no rows is one empty lane. */
+function channelLanes(ch) {
+  if (Array.isArray(ch.steps)) return ch.steps.length ? [...ch.steps] : [''];
+  return [ch.steps];
+}
+
+/** A copy of the channel holding these lanes: a string for one lane, an array otherwise. */
+function withLanes(ch, lanes) { return { ...ch, steps: lanes.length === 1 ? lanes[0] : [...lanes] }; }
+
+/** Writes lanes into the channel in place, by the rule of `withLanes`. */
+function setLanes(ch, lanes) { ch.steps = withLanes(ch, lanes).steps; }
+
+/** One lane as editable notes: `{start, len, mod, value, lane}`, holds folded into `len`. */
+function laneRowNotes(row, lane) {
   const notes = [];
   let current = null;
-  parseCells(ch.steps).forEach((c, i) => {
+  parseCells(row).forEach((c, i) => {
     if (c.value === '-') { if (current) current.len++; return; }
     if (c.value === '.') { current = null; return; }
-    current = { start: i, len: 1, mod: c.mod, value: c.value };
+    current = { start: i, len: 1, mod: c.mod, value: c.value, lane };
     notes.push(current);
   });
   return notes;
 }
+
+/** Every lane of a channel as one flat list of editable notes, lane-major. */
+function rowNotes(ch) { return channelLanes(ch).flatMap((row, lane) => laneRowNotes(row, lane)); }
 
 /** Notes back into a row of exactly `total` cells. A later head overwrites an earlier hold. */
 function notesToRow(notes, total) {
@@ -370,13 +396,64 @@ function encodePitch(tune, ch, midi, accent) {
   return found ? { mod: found.mod, value: found.value } : null;
 }
 
-/** Notes a renderer plays: pitched carry `midi`, drums carry `drum`. */
+/** Notes a renderer plays, every lane, lane-major: pitched carry `midi`, drums carry `drum`. */
 function channelNotes(tune, ch) {
   return rowNotes(ch).map((n) => ({
     stepIndex: n.start, steps: n.len, accent: n.mod === '>',
     drum: ch.role === 'drums' ? DRUM_SYMBOLS[n.value] : null,
     midi: ch.role === 'drums' ? null : cellMidi(tune, ch, n.mod, n.value),
+    lane: n.lane,
   }));
+}
+
+/**
+ * The melodic line a chord channel implies: per attack step the highest note
+ * (the lowest for a bass), sorted by step. Held notes make no events; drums are skipped.
+ */
+function skyline(ch, notes) {
+  const best = new Map();
+  for (const note of notes) {
+    if (note.midi === null) continue;
+    const kept = best.get(note.stepIndex);
+    if (!kept || (ch.role === 'bass' ? note.midi < kept.midi : note.midi > kept.midi)) best.set(note.stepIndex, note);
+  }
+  return [...best.values()].sort((a, b) => a.stepIndex - b.stepIndex);
+}
+
+/** What makes two editable notes "the same pitch": the MIDI note, or the drum letter. */
+function noteKey(tune, ch, n) { return ch.role === 'drums' ? n.value : cellMidi(tune, ch, n.mod, n.value); }
+
+/** Height for ordering a chord top-down: MIDI pitch, or the drum's row from the top of the roll. */
+function noteHeight(tune, ch, n) { return ch.role === 'drums' ? -DRUM_ORDER.indexOf(n.value) : cellMidi(tune, ch, n.mod, n.value); }
+
+/**
+ * Packs a flat list of notes into at most MAX_LANES lane rows of `total` cells.
+ * Notes are taken by start (ties: the higher pitch first); each keeps the lane `prefer`
+ * names (by default its previous one) when that lane is free for its whole span, and
+ * otherwise takes the lowest free lane. Taking notes in start order means a lane is free
+ * exactly when its last note has ended, so a note is only refused where four already sound.
+ * Empty lanes are dropped (one always stays). Returns the rows, the placed notes with their
+ * final lanes, and the notes no lane could take.
+ */
+function packLanes(tune, ch, notes, total, prefer = (n) => n.lane) {
+  const order = notes
+    .filter((n) => n.start >= 0 && n.start < total)
+    .map((n) => ({ ...n, len: Math.max(1, Math.min(n.len, total - n.start)) }))
+    .sort((a, b) => a.start - b.start || noteHeight(tune, ch, b) - noteHeight(tune, ch, a) || (a.lane ?? 0) - (b.lane ?? 0));
+  const ends = new Array(MAX_LANES).fill(0), lanes = [], placed = [], overflow = [];
+  for (const n of order) {
+    const want = prefer(n, placed);
+    let lane = Number.isInteger(want) && want >= 0 && want < MAX_LANES && ends[want] <= n.start ? want : ends.findIndex((e) => e <= n.start);
+    if (lane < 0) { overflow.push(n); continue; }
+    n.lane = lane;
+    ends[lane] = n.start + n.len;
+    (lanes[lane] ??= []).push(n);
+    placed.push(n);
+  }
+  const used = lanes.filter(Boolean);
+  used.forEach((list, i) => { for (const n of list) n.lane = i; });
+  const rows = used.length ? used.map((list) => notesToRow(list, total)) : ['..'.repeat(total)];
+  return { rows, notes: placed, overflow };
 }
 
 function formatRow(tune, ch, cells, barsPerLine = 0) {
@@ -391,10 +468,15 @@ function formatRow(tune, ch, cells, barsPerLine = 0) {
 
 function cellStrings(steps) { return parseCells(steps).map((c) => c.mod + c.value); }
 
+/** The tracker grid as text: one line per lane, the channel name on its first lane only. */
 function formatGrid(tune) {
   if (!tune.channels.length) return 'в треке нет каналов';
   const width = Math.max(...tune.channels.map((c) => c.name.length));
-  const lines = tune.channels.map((ch) => `${ch.name.padEnd(width)}  ${formatRow(tune, ch, cellStrings(ch.steps))}`);
+  const lines = tune.channels.flatMap((ch) => channelLanes(ch).map((row, lane) => {
+    let text;
+    try { text = formatRow(tune, ch, cellStrings(row)); } catch { text = row; }
+    return `${(lane === 0 ? ch.name : '').padEnd(width)}  ${text}`;
+  }));
   return [`${tune.name} · ${tune.key} ${tune.scale} · ${tune.tempo} bpm · ${tune.bars} bars · ${tune.profile}`, ...lines].join('\n');
 }
 
@@ -530,6 +612,9 @@ function encodeWav(left, right) {
 
 const GM_PROGRAMS = { pulse12: 80, pulse25: 80, pulse50: 80, pulse75: 80, triangle: 38, noise: 118, saw: 81, sine: 80 };
 const GM_DRUMS = { kick: 36, snare: 38, hat: 42, openhat: 46, crash: 49, clap: 39, tom: 45, ride: 51 };
+/** The General MIDI program of each studio instrument (port of the `gm` field in instruments.ts). */
+const INSTRUMENT_GM = { lead: 81, bass: 38, pad: 89, strings: 48, brass: 61, flute: 73, organ: 16, epiano: 4,
+  bell: 14, pluck: 25, harp: 46, marimba: 12, sampler: 0 };
 const PPQ = 480;
 
 function varLen(value) {
@@ -565,15 +650,41 @@ function encodeMidi(tune) {
     const drums = ch.role === 'drums';
     const mc = drums ? 9 : Math.min(15, index < 9 ? index : index + 1);
     const tps = (PPQ * 4) / stepDen(ch.step);
-    const events = [{ tick: 0, order: 0, bytes: [0xc0 | mc, drums ? 0 : GM_PROGRAMS[ch.voice] ?? 80] }];
+    const program = drums ? 0 : INSTRUMENT_GM[ch.instrument] ?? GM_PROGRAMS[ch.voice] ?? 80;
+    const events = [{ tick: 0, order: 0, bytes: [0xc0 | mc, program] }];
+    const struck = [];
     for (const n of channelNotes(tune, ch)) {
       const pitch = n.drum ? GM_DRUMS[n.drum] : n.midi;
       if (pitch == null || pitch < 0 || pitch > 127) continue;
-      const vel = Math.max(1, Math.min(127, Math.round(ch.volume * (n.accent ? 127 : 100))));
+      const velocity = Math.max(1, Math.min(127, Math.round(ch.volume * (n.accent ? 127 : 100))));
       const start = Math.round(n.stepIndex * tps);
       const end = Math.round((n.stepIndex + (n.drum ? 1 : n.steps)) * tps);
-      events.push({ tick: start, order: 1, bytes: [0x90 | mc, pitch, vel] });
-      events.push({ tick: Math.max(start + 1, end), order: 0, bytes: [0x80 | mc, pitch, 0] });
+      struck.push({ pitch, velocity, start, end });
+    }
+    // Lanes may double a pitch: MIDI cannot hold one pitch twice, so a note struck on a
+    // pitch still held cuts the held note short at that moment; the same pitch struck on
+    // the same tick becomes one note, the longest and the loudest.
+    const merged = new Set();
+    if (!drums) {
+      const held = new Map();
+      for (const n of [...struck].sort((a, b) => a.start - b.start)) {
+        const previous = held.get(n.pitch);
+        if (previous && previous.end > n.start) {
+          if (previous.start === n.start) {
+            n.end = Math.max(n.end, previous.end);
+            n.velocity = Math.max(n.velocity, previous.velocity);
+            merged.add(previous);
+          } else {
+            previous.end = n.start;
+          }
+        }
+        held.set(n.pitch, n);
+      }
+    }
+    for (const n of struck) {
+      if (merged.has(n)) continue;
+      events.push({ tick: n.start, order: 1, bytes: [0x90 | mc, n.pitch, n.velocity] });
+      events.push({ tick: Math.max(n.start + 1, n.end), order: 0, bytes: [0x80 | mc, n.pitch, 0] });
     }
     tracks.push(buildTrack(events, ch.name));
   });
@@ -681,15 +792,11 @@ function midiToTune(bytes, fileName) {
     let name = (mid.names[notes[0].track] || (drums ? 'drums' : `ch${notes[0].ch + 1}`)).replace(/[^\w-]+/g, '-').slice(0, 24) || 'ch';
     for (let k = 2; tune.channels.some((c) => c.name === name); k++) name = `${name.replace(/\d+$/, '')}${k}`;
     const ch = createChannel(name, { step, role: drums ? 'drums' : median < 52 ? 'bass' : 'melody' });
-    const sorted = [...notes].sort((a, b) => a.start - b.start || (ch.role === 'bass' ? a.pitch - b.pitch : b.pitch - a.pitch));
-    const placed = [];
+    const sorted = [...notes].sort((a, b) => a.start - b.start || b.pitch - a.pitch);
+    let placed = [];
     if (drums) {
       ch.voice = 'noise';
-      for (const n of sorted) {
-        const start = Math.round(n.start / tps);
-        if (placed.length && placed[placed.length - 1].start === start) { dropped++; continue; }
-        placed.push({ start, len: 1, mod: n.vel >= 110 ? '>' : '_', value: gmDrum(n.pitch) });
-      }
+      for (const n of sorted) placed.push({ start: Math.round(n.start / tps), len: 1, mod: n.vel >= 110 ? '>' : '_', value: gmDrum(n.pitch) });
     } else {
       // The base octave that can spell the most of this channel's notes.
       let bestOct = 4, bestCount = -1;
@@ -701,16 +808,39 @@ function midiToTune(bytes, fileName) {
       }
       ch.octave = bestOct;
       for (const n of sorted) {
-        const start = Math.round(n.start / tps);
-        if (placed.length && placed[placed.length - 1].start === start) { dropped++; continue; }
         const enc = encodePitch(tune, ch, n.pitch, false);
         if (!enc) { dropped++; continue; }
-        placed.push({ start, len: Math.max(1, Math.round((n.end - n.start) / tps)), ...enc });
+        const start = Math.round(n.start / tps);
+        placed.push({ start, len: Math.max(1, Math.round(n.end / tps) - start), ...enc });
       }
-      pitched.push({ ch, median });
     }
-    ch.steps = notesToRow(placed, total);
+    // One pitch struck twice on one step is one note, the longest.
+    const seen = new Map();
+    placed = placed.filter((n) => {
+      const key = `${n.start}:${noteKey(tune, ch, n)}`, kept = seen.get(key);
+      if (kept) { kept.len = Math.max(kept.len, n.len); return false; }
+      seen.set(key, n);
+      return true;
+    });
+    // Sloppy legato is not a chord: a note that starts while an earlier one still sounds
+    // for one step or less cuts that note off and follows it in its lane.
+    placed.forEach((n, i) => {
+      n.id = i;
+      for (const p of placed.slice(0, i)) {
+        const over = p.start + p.len - n.start;
+        if (p.start < n.start && over > 0 && over <= 1) { p.len = n.start - p.start; n.from = p.id; }
+      }
+    });
+    // Real chords go to lanes; notes beyond four sounding at once are dropped.
+    const packed = packLanes(tune, ch, placed, total, (n, done) => (n.from === undefined ? undefined : done.find((d) => d.id === n.from)?.lane));
+    dropped += packed.overflow.length;
+    setLanes(ch, packed.rows);
     tune.channels.push(ch);
+    if (!drums) {
+      // The melody is the channel whose top line sits highest.
+      const line = skyline(ch, channelNotes(tune, ch)).map((x) => x.midi).sort((a, b) => a - b);
+      pitched.push({ ch, median: line.length ? line[Math.floor(line.length / 2)] : median });
+    }
   }
   pitched.sort((a, b) => b.median - a.median);
   pitched.forEach(({ ch }, i) => {
@@ -726,8 +856,30 @@ function midiToTune(bytes, fileName) {
 
 /* ───────────────────────── Checks (a slice of tune lint) ───────────────────────── */
 
+/** The first place two lanes of a channel sound the same pitch at once (port of lane-unison), or null. */
+function laneUnison(tune, ch) {
+  const lanes = channelLanes(ch);
+  if (ch.role === 'drums' || lanes.length < 2) return null;
+  const sounding = lanes.map((row, lane) => {
+    const at = new Map();
+    for (const n of laneRowNotes(row, lane)) {
+      const midi = cellMidi(tune, ch, n.mod, n.value);
+      for (let i = 0; i < n.len; i++) at.set(n.start + i, midi);
+    }
+    return at;
+  });
+  for (let a = 0; a < sounding.length; a++) {
+    for (let b = a + 1; b < sounding.length; b++) {
+      const shared = [...sounding[a].keys()].filter((step) => sounding[a].get(step) === sounding[b].get(step));
+      if (shared.length) { const step = Math.min(...shared); return { a, b, step, midi: sounding[a].get(step) }; }
+    }
+  }
+  return null;
+}
+
 function nesViolations(tune) {
-  const count = (pred) => tune.channels.filter(pred).length;
+  // Every lane of a channel is a voice of its own on the chip.
+  const count = (pred) => tune.channels.filter(pred).reduce((sum, c) => sum + channelLanes(c).length, 0);
   const out = [];
   const pulses = count((c) => c.role !== 'drums' && c.voice.startsWith('pulse'));
   const tri = count((c) => c.role !== 'drums' && c.voice === 'triangle');
@@ -742,11 +894,19 @@ function nesViolations(tune) {
 function lint(tune) {
   const out = [];
   for (const ch of tune.channels) {
-    let cells;
-    try { cells = parseCells(ch.steps); } catch (e) { out.push(['err', `${ch.name}: ${e.message}`]); continue; }
-    const want = totalSteps(tune, ch);
-    if (cells.length !== want) out.push(['err', `${ch.name}: ${cells.length} шагов вместо ${want} (сетка не совпадает)`]);
+    const lanes = channelLanes(ch), want = totalSteps(tune, ch);
+    if (lanes.length > MAX_LANES) out.push(['err', `${ch.name}: голосов ${lanes.length}, в канале их может быть не больше ${MAX_LANES}`]);
+    let broken = false;
+    lanes.forEach((row, lane) => {
+      const prefix = lanes.length > 1 ? `голос ${lane + 1}: ` : '';
+      let cells;
+      try { cells = parseCells(row); } catch (e) { out.push(['err', `${ch.name}: ${prefix}${e.message}`]); broken = true; return; }
+      if (cells.length !== want) out.push(['err', `${ch.name}: ${prefix}${cells.length} шагов вместо ${want} (сетка не совпадает)`]);
+    });
+    if (broken) continue;
     if (!rowNotes(ch).length) out.push(['warn', `${ch.name}: канал молчит`]);
+    const unison = laneUnison(tune, ch);
+    if (unison) out.push(['warn', `${ch.name}: голоса ${unison.a + 1} и ${unison.b + 1} вместе звучат ${midiName(unison.midi)} на шаге ${unison.step + 1} — MIDI не удержит одну высоту дважды`]);
   }
   if (tune.profile === 'nes') for (const v of nesViolations(tune)) out.push(['err', `nes: ${v}`]);
   if (tune.profile === 'studio') out.push(['warn', 'профиль studio: здесь звучит чиптюн-приближение, настоящий звук — tune render']);
@@ -764,7 +924,7 @@ const COLORS = ['#6b8cff', '#ffc857', '#7bd88f', '#f27ea9', '#b48cff', '#5fd4e0'
 
 let tune = null;
 let active = 0;
-let selected = null;           // start step of the selected note in the active channel
+let selected = null;           // the selected note of the active channel: {start, key}
 let lastLen = 2;
 let lastPeak = 0;
 const muted = new Set(), soloed = new Set();
@@ -797,9 +957,11 @@ const audible = (i) => (soloed.size ? soloed.has(i) : !muted.has(i));
 function fitRows() {
   for (const c of tune.channels) {
     const total = totalSteps(tune, c);
-    const cells = cellStrings(c.steps).slice(0, total);
-    while (cells.length < total) cells.push('..');
-    c.steps = cells.join('');
+    setLanes(c, channelLanes(c).map((row) => {
+      const cells = cellStrings(row).slice(0, total);
+      while (cells.length < total) cells.push('..');
+      return cells.join('');
+    }));
   }
   if (tune.sections.length === 1 && tune.sections[0].from === 0) tune.sections[0].bars = tune.bars;
 }
@@ -911,7 +1073,7 @@ function layout() {
   const c = ch();
   const den = stepDen(c.step);
   const stepW = 14 * (16 / den) * zoom;
-  const total = Math.max(totalSteps(tune, c), parseCells(c.steps).length);
+  const total = Math.max(totalSteps(tune, c), ...channelLanes(c).map((row) => parseCells(row).length));
   let rows;
   if (c.role === 'drums') {
     rows = DRUM_ORDER.map((letter) => ({ drum: DRUM_SYMBOLS[letter], letter, ok: true }));
@@ -1018,7 +1180,7 @@ function draw() {
     if (r < 0) continue;
     const x = n.start * L.stepW + 1, y = r * L.rowH + 1;
     const w = (c.role === 'drums' ? 1 : n.len) * L.stepW - 2, h = L.rowH - 2;
-    const isSel = n.start === selected;
+    const isSel = isSelected(c, n);
     roundRect(x, y, w, h, 3);
     g.fillStyle = color;
     g.globalAlpha = audible(active) ? 1 : 0.4;
@@ -1116,11 +1278,18 @@ function hitTest(e) {
   return { area: 'grid', L, row, step, gx, note, edge, notes };
 }
 
-/** Puts `n` into `base`, keeping the channel one voice: it removes what starts under it and cuts what rings into it. */
-function place(base, n, total) {
-  const s = n.start, e = Math.min(total, n.start + n.len);
+function select(c, n) { selected = { start: n.start, key: noteKey(tune, c, n) }; }
+function isSelected(c, n) { return !!selected && n.start === selected.start && noteKey(tune, c, n) === selected.key; }
+
+/**
+ * Puts `n` into `base`. Other pitches stack with it (the lanes take them); a note of the
+ * same pitch sounding there is replaced: removed if it starts under `n`, cut where `n` starts otherwise.
+ */
+function place(base, n, total, c = ch()) {
+  const s = n.start, e = Math.min(total, n.start + n.len), key = noteKey(tune, c, n);
   const out = [];
   for (const m of base) {
+    if (noteKey(tune, c, m) !== key) { out.push(m); continue; }
     if (m.start >= s && m.start < e) continue;
     const copy = { ...m };
     if (copy.start < s && copy.start + copy.len > s) copy.len = s - copy.start;
@@ -1130,10 +1299,16 @@ function place(base, n, total) {
   return out;
 }
 
-function writeNotes(notes) {
+const LANES_FULL = 'В этом месте уже звучат четыре ноты — больше в одном канале нельзя.';
+
+/** Re-packs the active channel's notes into lanes and writes them; refuses where a fifth note would sound. */
+function writeNotes(notes, quiet = false) {
   const c = ch();
-  c.steps = notesToRow(notes, totalSteps(tune, c));
+  const packed = packLanes(tune, c, notes, totalSteps(tune, c));
+  if (packed.overflow.length) { if (!quiet) toast(LANES_FULL); return false; }
+  setLanes(c, packed.rows);
   invalidateMix();
+  return true;
 }
 
 function encodeRow(L, row, accent) {
@@ -1152,7 +1327,7 @@ function soundOf(c, n) {
 function eraseAt(h) {
   if (h.area !== 'grid' || !h.note) return;
   writeNotes(h.notes.filter((n) => n !== h.note));
-  if (selected === h.note.start) selected = null;
+  if (isSelected(h.L.c, h.note)) selected = null;
   draw();
 }
 
@@ -1163,7 +1338,7 @@ function toggleAccent(n) {
     return;
   }
   const before = snapshot();
-  writeNotes(rowNotes(c).map((m) => (m.start === n.start ? { ...m, mod: m.mod === '>' ? '_' : '>' } : m)));
+  writeNotes(rowNotes(c).map((m) => (m.start === n.start && m.lane === n.lane ? { ...m, mod: m.mod === '>' ? '_' : '>' } : m)));
   pushUndo(before);
   changed();
 }
@@ -1198,7 +1373,7 @@ scroller.addEventListener('pointerdown', (e) => {
   if (e.button !== 0) return;
   if (h.note && e.shiftKey) { toggleAccent(h.note); return; }
   if (h.note) {
-    selected = h.note.start;
+    select(h.L.c, h.note);
     drag = { mode: h.edge ? 'resize' : 'move', before, base: h.notes.filter((n) => n !== h.note),
       orig: { ...h.note }, cur: { ...h.note }, grabStep: h.step, grabRow: h.row, moved: false };
     if (!h.edge) previewNote(h.L.c, soundOf(h.L.c, h.note));
@@ -1206,9 +1381,9 @@ scroller.addEventListener('pointerdown', (e) => {
     const enc = encodeRow(h.L, h.row, false);
     if (!enc) { toast('Эту высоту формат записать не может: тёмные полосы — вне лада и октав канала.'); return; }
     const n = { start: h.step, len: h.L.c.role === 'drums' ? 1 : lastLen, ...enc };
+    if (!writeNotes(place(h.notes, n, totalSteps(tune, h.L.c)))) return;
     drag = { mode: 'create', before, base: h.notes, orig: n, cur: n, grabStep: h.step, moved: true };
-    selected = n.start;
-    writeNotes(place(drag.base, n, totalSteps(tune, h.L.c)));
+    select(h.L.c, n);
     previewNote(h.L.c, soundOf(h.L.c, n));
   }
   scroller.setPointerCapture(e.pointerId);
@@ -1242,10 +1417,11 @@ scroller.addEventListener('pointermove', (e) => {
   }
   if (cur.start === drag.cur.start && cur.len === drag.cur.len && cur.mod === drag.cur.mod && cur.value === drag.cur.value) return;
   const pitchChanged = cur.value !== drag.cur.value || cur.mod !== drag.cur.mod;
+  // Where a fifth note would sound the note stays put; the message is shown once per drag.
+  if (!writeNotes(place(drag.base, cur, total), drag.refused)) { drag.refused = true; return; }
   drag.cur = cur;
   drag.moved = true;
-  selected = cur.start;
-  writeNotes(place(drag.base, cur, total));
+  select(L.c, cur);
   if (pitchChanged) previewNote(L.c, soundOf(L.c, cur));
   draw();
 });
@@ -1272,7 +1448,7 @@ function seek(sec) {
 
 function moveSelected(dStep, dRow) {
   const c = ch();
-  const notes = rowNotes(c), n = notes.find((m) => m.start === selected);
+  const notes = rowNotes(c), n = notes.find((m) => isSelected(c, m));
   if (!n) return;
   const L = layout(), total = totalSteps(tune, c);
   const cur = { ...n };
@@ -1285,8 +1461,8 @@ function moveSelected(dStep, dRow) {
     Object.assign(cur, enc);
   }
   const before = snapshot();
-  writeNotes(place(notes.filter((m) => m !== n), cur, total));
-  selected = cur.start;
+  if (!writeNotes(place(notes.filter((m) => m !== n), cur, total))) return;
+  select(c, cur);
   pushUndo(before);
   if (dRow) previewNote(c, soundOf(c, cur));
   changed();
@@ -1316,7 +1492,7 @@ function buildChannels() {
   $('channels').innerHTML = tune.channels.map((c, i) => `
     <div class="chan${i === active ? ' active' : ''}" data-i="${i}">
       <span class="sw" style="background:${COLORS[i % COLORS.length]}"></span>
-      <span class="nm">${esc(c.name)} <small>${esc(c.role === 'drums' ? 'барабаны' : c.voice)}</small></span>
+      <span class="nm">${esc(c.name)} <small>${esc(c.role === 'drums' ? 'барабаны' : c.voice)}${channelLanes(c).length > 1 ? ` · ${channelLanes(c).length} ${channelLanes(c).length < 5 ? 'голоса' : 'голосов'}` : ''}</small></span>
       <button class="m${muted.has(i) ? ' on' : ''}" data-act="mute" title="Заглушить">M</button>
       <button class="s${soloed.has(i) ? ' on' : ''}" data-act="solo" title="Соло">S</button>
       <button data-act="del" title="Удалить канал">×</button>
@@ -1348,11 +1524,10 @@ function buildChanForm() {
 function buildBottom() {
   const c = ch();
   $('rowName').textContent = c ? `«${c.name}»` : '';
-  if (c && document.activeElement !== $('rowText')) {
-    $('rowText').value = formatRow(tune, c, cellStrings(c.steps), 4);
-    $('rowMsg').innerHTML = '';
-  }
-  $('cli').textContent = c ? `npm run tune -- set ${tune.name || 'track'} --channel ${c.name} --steps "${formatRow(tune, c, cellStrings(c.steps))}"` : '';
+  if (!$('rowLanes').contains(document.activeElement)) buildLaneEditors();
+  $('bAddLane').disabled = !c || $('rowLanes').querySelectorAll('textarea').length >= MAX_LANES;
+  $('cli').textContent = c ? `npm run tune -- set ${tune.name || 'track'} --channel ${c.name} ${channelLanes(c)
+    .map((row) => `--steps "${formatRow(tune, c, cellStrings(row))}"`).join(' ')}` : '';
   $('grid').textContent = formatGrid(tune);
   const items = lint(tune);
   $('lint').innerHTML = items.length
@@ -1366,9 +1541,10 @@ function commitEdit() { if (preEdit !== null) { pushUndo(preEdit); preEdit = nul
 
 function resampleStep(c, newStep) {
   const ratio = stepDen(newStep) / stepDen(c.step);
-  const notes = rowNotes(c).map((n) => ({ ...n, start: Math.round(n.start * ratio), len: Math.max(1, Math.round(n.len * ratio)) }));
+  const lanes = channelLanes(c).map((row, lane) => laneRowNotes(row, lane)
+    .map((n) => ({ ...n, start: Math.round(n.start * ratio), len: Math.max(1, Math.round(n.len * ratio)) })));
   c.step = newStep;
-  c.steps = notesToRow(notes, totalSteps(tune, c));
+  setLanes(c, lanes.map((notes) => notesToRow(notes, totalSteps(tune, c))));
 }
 
 function applyTrackField(field, value, final) {
@@ -1482,29 +1658,67 @@ $('bDupChan').addEventListener('click', () => {
 
 /* ───────────────────────── Tracker text ───────────────────────── */
 
+/** One textarea per lane of the active channel, plus `extra` empty ones (up to four in all). */
+function buildLaneEditors(extra = 0) {
+  const c = ch(), box = $('rowLanes');
+  if (!c) { box.innerHTML = ''; return; }
+  const rows = channelLanes(c).map((row) => formatRow(tune, c, cellStrings(row), 4));
+  for (let i = 0; i < extra && rows.length < MAX_LANES; i++) rows.push('');
+  box.classList.toggle('many', rows.length > 1);
+  box.innerHTML = rows.map((text, i) => `<div class="lane"><label>Голос ${i + 1}</label>`
+    + `<textarea spellcheck="false" wrap="off" data-lane="${i}" name="lane${i + 1}" aria-label="Голос ${i + 1}">${esc(text)}</textarea><div class="msg"></div></div>`).join('');
+}
+
 let rowBefore = null, rowTimer = 0;
-$('rowText').addEventListener('focus', () => { rowBefore = snapshot(); });
-$('rowText').addEventListener('input', () => {
+
+/** Reads every lane textarea into the channel; an empty lane other than the first is dropped. */
+function applyLaneText() {
   clearTimeout(rowTimer);
-  rowTimer = setTimeout(() => {
-    const c = ch();
+  rowTimer = 0;
+  const c = ch();
+  if (!c) return;
+  const want = totalSteps(tune, c), lanes = [];
+  let ok = true;
+  $('rowLanes').querySelectorAll('textarea').forEach((area, i) => {
+    const msg = area.nextElementSibling;
     try {
-      const cells = parseCells($('rowText').value);
+      const cells = parseCells(area.value);
       validateCells(cells, c);
-      c.steps = cells.map((x) => x.mod + x.value).join('');
-      const want = totalSteps(tune, c);
-      $('rowMsg').innerHTML = cells.length === want
-        ? `<span class="ok">✓ ${cells.length} шагов</span>`
-        : `<span class="warn">! ${cells.length} шагов, а в ${tune.bars} тактах их ${want}</span>`;
-      invalidateMix(); draw(); buildBottom();
+      const row = cells.map((x) => x.mod + x.value).join('');
+      const empty = !laneRowNotes(row, i).length;
+      if (i === 0 || !empty) lanes.push(row);
+      msg.innerHTML = i > 0 && empty
+        ? '<span class="hint">пустой голос — пропадёт, когда уйдёшь из строки</span>'
+        : cells.length === want
+          ? `<span class="ok">✓ ${cells.length} шагов</span>`
+          : `<span class="warn">! ${cells.length} шагов, а в ${tune.bars} тактах их ${want}</span>`;
     } catch (err) {
-      $('rowMsg').innerHTML = `<span class="err">✗ ${esc(err.message)}</span>`;
+      ok = false;
+      msg.innerHTML = `<span class="err">✗ ${esc(err.message)}</span>`;
     }
-  }, 250);
+  });
+  if (!ok) return;
+  setLanes(c, lanes);
+  invalidateMix(); draw(); buildBottom(); buildChannels();
+}
+
+$('rowLanes').addEventListener('focusin', () => { if (rowBefore === null) rowBefore = snapshot(); });
+$('rowLanes').addEventListener('input', () => {
+  clearTimeout(rowTimer);
+  rowTimer = setTimeout(applyLaneText, 250);
 });
-$('rowText').addEventListener('blur', () => {
+$('rowLanes').addEventListener('focusout', () => setTimeout(() => {
+  if ($('rowLanes').contains(document.activeElement)) return;
+  if (rowTimer) applyLaneText();
   if (rowBefore !== null) { pushUndo(rowBefore); rowBefore = null; }
   save(); buildBottom();
+}, 0));
+$('bAddLane').addEventListener('click', () => {
+  if (!ch() || channelLanes(ch()).length >= MAX_LANES) return;
+  buildLaneEditors(1);
+  const areas = $('rowLanes').querySelectorAll('textarea');
+  areas[areas.length - 1].focus();
+  $('bAddLane').disabled = true;
 });
 $('bCopy').addEventListener('click', () => {
   navigator.clipboard?.writeText($('cli').textContent).then(() => toast('Скопировано'), () => toast('Не удалось скопировать'));
@@ -1536,7 +1750,7 @@ async function openFile(file) {
     if (/\.midi?$/i.test(file.name)) {
       const { tune: t, dropped } = midiToTune(new Uint8Array(await file.arrayBuffer()), file.name);
       tune = t;
-      toast(`MIDI: ${t.channels.length} канал(ов), ${t.key} ${SCALE_LABELS[t.scale]}, ${t.tempo} bpm${dropped ? ` · отброшено нот: ${dropped} (аккорды или вне лада)` : ''}`);
+      toast(`MIDI: ${t.channels.length} канал(ов), ${t.key} ${SCALE_LABELS[t.scale]}, ${t.tempo} bpm${dropped ? ` · отброшено нот: ${dropped} (больше четырёх сразу или вне лада)` : ''}`);
     } else {
       tune = parseTune(await file.text());
       toast(`Открыт «${tune.name || file.name}»`);
@@ -1616,7 +1830,7 @@ window.addEventListener('keydown', (e) => {
   if (e.key === 'Delete' || e.key === 'Backspace') {
     e.preventDefault();
     const before = snapshot();
-    writeNotes(rowNotes(ch()).filter((n) => n.start !== selected));
+    writeNotes(rowNotes(ch()).filter((n) => !isSelected(ch(), n)));
     selected = null; pushUndo(before); changed();
     return;
   }
