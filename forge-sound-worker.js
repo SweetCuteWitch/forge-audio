@@ -1,4 +1,4 @@
-// source-hash: d778be98f55512cf3b8dfb77dd791f0c5c3a82597a09b36c5d0da152d344db1b
+// source-hash: 97de3b1696c938166a41c649235c0c044de2db8a23b494137e1a3130a3394353
 // src/sound/dsp.ts
 var dbToGain = (db) => 10 ** (db / 20);
 var gainToDb = (gain) => 20 * Math.log10(Math.max(gain, 1e-9));
@@ -282,6 +282,9 @@ var DRIVE_CORNER = 0.43;
 var DRIVE_KAISER = 8;
 var DRIVE_MAX_DB = 30;
 var DRIVE_BIAS = 0.3;
+var hardClip = (u) => u >= 1 ? 1 : u <= -1 ? -1 : 1.5 * u - 0.5 * u * u * u;
+var sineFold = (u) => Math.sin(Math.PI / 2 * u);
+var SHAPERS = { soft: Math.tanh, hard: hardClip, fold: sineFold };
 function besselI0(x) {
   let sum = 1;
   let term = 1;
@@ -312,6 +315,8 @@ function drive(input, sampleRate, options) {
   const amount = Math.min(1, Math.max(0, options.amount));
   const mix = Math.min(1, Math.max(0, options.mix ?? 1));
   if (amount === 0 || mix === 0) return input.slice();
+  if (options.low !== void 0) return driveAbove(input, sampleRate, options, options.low);
+  const shape = SHAPERS[options.mode ?? "soft"];
   const L = DRIVE_OVERSAMPLE;
   const N = DRIVE_TAPS;
   const h = driveFir ??= kaiserLowpass(N, DRIVE_CORNER / L, DRIVE_KAISER);
@@ -319,7 +324,7 @@ function drive(input, sampleRate, options) {
   const phaseTaps = Math.ceil(N / L);
   const pre = dbToGain(DRIVE_MAX_DB * amount);
   const bias = DRIVE_BIAS * amount;
-  const offset = Math.tanh(bias);
+  const offset = shape(bias);
   const n = input.length;
   const total2 = n + latency;
   const x = (i) => i >= 0 && i < n ? input[i] : 0;
@@ -334,7 +339,7 @@ function drive(input, sampleRate, options) {
         if (j >= N) break;
         v += h[j] * x(k - q);
       }
-      const w = Math.tanh(pre * L * v + bias) - offset;
+      const w = shape(pre * L * v + bias) - offset;
       ring[pos] = w;
       ring[pos + N] = w;
       if (p === 0 && k >= latency) {
@@ -364,6 +369,20 @@ function drive(input, sampleRate, options) {
   const out = new Float32Array(n);
   for (let i = 0; i < n; i++) out[i] = input[i] * (1 - mix) + wet[i] * gain * mix;
   return out;
+}
+function driveAbove(input, sampleRate, options, low) {
+  const lp = [new Biquad("lowpass", low, sampleRate), new Biquad("lowpass", low, sampleRate)];
+  const hp = [new Biquad("highpass", low, sampleRate), new Biquad("highpass", low, sampleRate)];
+  const n = input.length;
+  const bottom = new Float32Array(n);
+  const top = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    bottom[i] = lp[1].process(lp[0].process(input[i]));
+    top[i] = hp[1].process(hp[0].process(input[i]));
+  }
+  const driven = drive(top, sampleRate, { ...options, low: void 0 });
+  for (let i = 0; i < n; i++) driven[i] += bottom[i];
+  return driven;
 }
 var DUCK_ATTACK_MS = 5;
 function duckEnvelope(length, sampleRate, hits, options) {
@@ -954,7 +973,7 @@ var STUDIO_DRUM_TAIL = {
 };
 
 // src/web/protocol.ts
-var BUNDLE_VERSION = true ? "d778be98 2026-10-20" : "dev";
+var BUNDLE_VERSION = true ? "97de3b16 2026-10-21" : "dev";
 var DEFAULT_SAMPLE_BASE_URL = "https://raw.githubusercontent.com/SweetCuteWitch/forge-audio/main/samples/";
 function synthList() {
   return Object.entries(INSTRUMENTS).filter(([id]) => id !== "sampler").map(([id, i]) => ({ id, low: i.low, high: i.high, role: i.role, description: i.description }));
@@ -1317,6 +1336,8 @@ var DRUM_LETTERS = {
   ride: "r"
 };
 var DRIVE_TONE_RANGE = { low: 200, high: 2e4 };
+var DRIVE_LOW_RANGE = { low: 20, high: 1e3 };
+var DRIVE_MODE_NAMES = ["soft", "hard", "fold"];
 var DUCK_RELEASE_MAX = 1e4;
 var ARTICULATIONS = ["normal", "ring", "legato"];
 var DEFAULT_ENVELOPE = { attack: 0, decay: 60, sustain: 0.7, release: 90 };
@@ -1465,6 +1486,12 @@ function checkDriveDuck(channel) {
       throw new ForgeFormatError(`${where}: fx.drive.tone must be ${DRIVE_TONE_RANGE.low} \u2026 ${DRIVE_TONE_RANGE.high} Hz, got ${String(d.tone)}`);
     }
     if (d.mix !== void 0 && !isNumberIn(d.mix, 0, 1)) throw new ForgeFormatError(`${where}: fx.drive.mix must be 0 \u2026 1, got ${String(d.mix)}`);
+    if (d.mode !== void 0 && !DRIVE_MODE_NAMES.includes(d.mode)) {
+      throw new ForgeFormatError(`${where}: fx.drive.mode must be one of ${DRIVE_MODE_NAMES.join(", ")}, got ${String(d.mode)}`);
+    }
+    if (d.low !== void 0 && !isNumberIn(d.low, DRIVE_LOW_RANGE.low, DRIVE_LOW_RANGE.high)) {
+      throw new ForgeFormatError(`${where}: fx.drive.low must be ${DRIVE_LOW_RANGE.low} \u2026 ${DRIVE_LOW_RANGE.high} Hz, got ${String(d.low)}`);
+    }
   }
   if (fx.duck !== void 0) {
     const d = fx.duck;
